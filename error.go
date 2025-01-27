@@ -11,6 +11,9 @@ type APIError struct {
 	Code     any       `json:"code,omitempty"`
 	Message  string    `json:"message"`
 	Metadata *Metadata `json:"metadata,omitempty"`
+
+	// Internal fields
+	HTTPStatusCode int `json:"-"`
 }
 
 // Metadata provides additional information about the error.

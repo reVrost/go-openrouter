@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"net/http"
 )
 
@@ -13,7 +14,9 @@ const (
 	DeepseekR1             = "deepseek/deepseek-r1"
 	DeepseekR1DistillLlama = "deepseek/deepseek-r1-distill-llama-70b"
 	LiquidLFM7B            = "liquid/lfm-7b"
+	Phi3Mini               = "microsoft/phi-3-mini-128k-instruct:free"
 	GeminiFlashExp         = "google/gemini-2.0-flash-exp:free"
+	GeminiProExp           = "google/gemini-pro-1.5-exp"
 )
 
 // Chat message role defined by the Openrouter API.
@@ -327,6 +330,8 @@ func (c *Client) CreateChatCompletion(
 	if err != nil {
 		return
 	}
+	b, _ := json.MarshalIndent(request, "", "\t")
+	fmt.Printf("request :\n %s", string(b))
 
 	err = c.sendRequest(req, &response)
 	return
