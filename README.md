@@ -4,15 +4,13 @@
 [![Go Report Card](https://goreportcard.com/badge/github.com/revrost/go-openrouter)](https://goreportcard.com/report/github.com/revrost/go-openrouter)
 [![codecov](https://codecov.io/gh/revrost/go-openrouter/branch/master/graph/badge.svg?token=bCbIfHLIsW)](https://codecov.io/gh/revrost/go-openrouter)
 
-This library provides unofficial Go clients for [Openrouter API](https://openrouter.ai/docs/quick-start)
+This library provides unofficial Go client for [Openrouter API](https://openrouter.ai/docs/quick-start)
 
 ## Installation
 
 ```
 go get github.com/revrost/go-openrouter
 ```
-
-Currently, go-openrouter requires Go version 1.18 or greater.
 
 ## Usage
 
@@ -28,7 +26,11 @@ import (
 )
 
 func main() {
-	client := openrouter.NewClient("your token")
+	client := openrouter.NewClient(
+		"your token",
+		openrouter.WithXTitle("My App"),
+		openrouter.WithHTTPReferer("https://myapp.com"),
+	)
 	resp, err := client.CreateChatCompletion(
 		context.Background(),
 		openrouter.ChatCompletionRequest{

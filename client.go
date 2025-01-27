@@ -14,9 +14,14 @@ type Client struct {
 	requestBuilder RequestBuilder
 }
 
-func NewClient(auth, xTitle, httpReferer string) (*Client, error) {
-	config := DefaultConfig(auth, xTitle, httpReferer)
-	return NewClientWithConfig(config), nil
+func NewClient(auth string, opts ...Option) *Client {
+	config := DefaultConfig(auth)
+
+	for _, opt := range opts {
+		opt(config)
+	}
+
+	return NewClientWithConfig(*config)
 }
 
 func NewClientWithConfig(config ClientConfig) *Client {
@@ -85,6 +90,48 @@ func decodeString(body io.Reader, output *string) error {
 // args[0] is model name, if API type is Azure, model name is required to get deployment name.
 func (c *Client) fullURL(suffix string) string {
 	return fmt.Sprintf("%s%s", c.config.BaseURL, suffix)
+}
+
+type requestOptions struct {
+	body   any
+	header http.Header
+}
+
+type requestOption func(*requestOptions)
+
+func withBody(body any) requestOption {
+	return func(args *requestOptions) {
+		args.body = body
+	}
+}
+
+func withContentType(contentType string) requestOption {
+	return func(args *requestOptions) {
+		args.header.Set("Content-Type", contentType)
+	}
+}
+
+func withBetaAssistantVersion(version string) requestOption {
+	return func(args *requestOptions) {
+		args.header.Set("OpenAI-Beta", fmt.Sprintf("assistants=%s", version))
+	}
+}
+
+func (c *Client) newRequest(ctx context.Context, method, url string, setters ...requestOption) (*http.Request, error) {
+	// Default Options
+	args := &requestOptions{
+		body:   nil,
+		header: make(http.Header),
+	}
+	for _, setter := range setters {
+		setter(args)
+	}
+	req, err := c.requestBuilder.Build(ctx, method, url, args.body, args.header)
+	if err != nil {
+		return nil, err
+	}
+	c.setCommonHeaders(req)
+	return req, nil
 }
 
 func (c *Client) newStreamRequest(
