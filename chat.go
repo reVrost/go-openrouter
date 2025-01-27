@@ -16,7 +16,7 @@ const (
 	GeminiFlashExp         = "google/gemini-2.0-flash-exp:free"
 )
 
-// Chat message role defined by the OpenAI API.
+// Chat message role defined by the Openrouter API.
 const (
 	ChatMessageRoleSystem    = "system"
 	ChatMessageRoleUser      = "user"

@@ -87,7 +87,6 @@ func decodeString(body io.Reader, output *string) error {
 }
 
 // fullURL returns full URL for request.
-// args[0] is model name, if API type is Azure, model name is required to get deployment name.
 func (c *Client) fullURL(suffix string) string {
 	return fmt.Sprintf("%s%s", c.config.BaseURL, suffix)
 }
@@ -108,12 +107,6 @@ func withBody(body any) requestOption {
 func withContentType(contentType string) requestOption {
 	return func(args *requestOptions) {
 		args.header.Set("Content-Type", contentType)
-	}
-}
-
-func withBetaAssistantVersion(version string) requestOption {
-	return func(args *requestOptions) {
-		args.header.Set("OpenAI-Beta", fmt.Sprintf("assistants=%s", version))
 	}
 }
 

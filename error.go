@@ -6,22 +6,45 @@ import (
 	"strings"
 )
 
-// APIError provides error information returned by the OpenAI API.
-// InnerError struct is only valid for Azure OpenAI Service.
+// APIError provides error information returned by the Openrouter API.
 type APIError struct {
-	Code           any         `json:"code,omitempty"`
-	Message        string      `json:"message"`
-	Param          *string     `json:"param,omitempty"`
-	Type           string      `json:"type"`
-	HTTPStatus     string      `json:"-"`
-	HTTPStatusCode int         `json:"-"`
-	InnerError     *InnerError `json:"innererror,omitempty"`
+	Code     any       `json:"code,omitempty"`
+	Message  string    `json:"message"`
+	Metadata *Metadata `json:"metadata,omitempty"`
 }
 
-// InnerError Azure Content filtering. Only valid for Azure OpenAI Service.
-type InnerError struct {
-	Code                 string               `json:"code,omitempty"`
-	ContentFilterResults ContentFilterResults `json:"content_filter_result,omitempty"`
+// Metadata provides additional information about the error.
+type Metadata struct {
+	// Common fields
+	ProviderName string `json:"provider_name,omitempty"`
+
+	// Provider-specific fields
+	Raw json.RawMessage `json:"raw,omitempty"` // Raw error from provider
+
+	// Moderation-specific fields
+	Reasons      []string `json:"reasons,omitempty"`       // Why input was flagged
+	FlaggedInput string   `json:"flagged_input,omitempty"` // Truncated flagged text
+	ModelSlug    string   `json:"model_slug,omitempty"`    // Model that flagged input
+}
+
+// ProviderError returns provider-specific error details
+func (m *Metadata) ProviderError() (string, json.RawMessage) {
+	return m.ProviderName, m.Raw
+}
+
+// ModerationError returns moderation-specific error details
+func (m *Metadata) ModerationError() (string, []string, string, string) {
+	return m.ProviderName, m.Reasons, m.FlaggedInput, m.ModelSlug
+}
+
+// IsProviderError checks if this is a provider error
+func (m *Metadata) IsProviderError() bool {
+	return m.Raw != nil
+}
+
+// IsModerationError checks if this is a moderation error
+func (m *Metadata) IsModerationError() bool {
+	return len(m.Reasons) > 0
 }
 
 // RequestError provides information about generic request errors.
@@ -37,10 +60,11 @@ type ErrorResponse struct {
 }
 
 func (e *APIError) Error() string {
-	if e.HTTPStatusCode > 0 {
-		return fmt.Sprintf("error, status code: %d, status: %s, message: %s", e.HTTPStatusCode, e.HTTPStatus, e.Message)
+	// If it has metadata
+	if e.Metadata != nil {
+		return fmt.Sprintf("error, code: %v, message: %s, reasons: %v, flagged_input: %s, provider_name: %s, model_slug: %s",
+			e.Code, e.Message, e.Metadata.Reasons, e.Metadata.FlaggedInput, e.Metadata.ProviderName, e.Metadata.ModelSlug)
 	}
-
 	return e.Message
 }
 
@@ -53,38 +77,12 @@ func (e *APIError) UnmarshalJSON(data []byte) (err error) {
 
 	err = json.Unmarshal(rawMap["message"], &e.Message)
 	if err != nil {
-		// If the parameter field of a function call is invalid as a JSON schema
-		// refs: https://github.com/sashabaranov/go-openai/issues/381
 		var messages []string
 		err = json.Unmarshal(rawMap["message"], &messages)
 		if err != nil {
 			return
 		}
 		e.Message = strings.Join(messages, ", ")
-	}
-
-	// optional fields for azure openai
-	// refs: https://github.com/sashabaranov/go-openai/issues/343
-	if _, ok := rawMap["type"]; ok {
-		err = json.Unmarshal(rawMap["type"], &e.Type)
-		if err != nil {
-			return
-		}
-	}
-
-	if _, ok := rawMap["innererror"]; ok {
-		err = json.Unmarshal(rawMap["innererror"], &e.InnerError)
-		if err != nil {
-			return
-		}
-	}
-
-	// optional fields
-	if _, ok := rawMap["param"]; ok {
-		err = json.Unmarshal(rawMap["param"], &e.Param)
-		if err != nil {
-			return
-		}
 	}
 
 	if _, ok := rawMap["code"]; !ok {
