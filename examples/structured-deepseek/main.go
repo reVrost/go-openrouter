@@ -8,7 +8,6 @@ import (
 	"os"
 
 	"github.com/revrost/go-openrouter"
-	"github.com/revrost/go-openrouter/jsonschema"
 )
 
 func main() {
@@ -20,8 +19,12 @@ func main() {
 		Temperature float64 `json:"temperature"`
 		Condition   string  `json:"condition"`
 	}
-	var result Result
-	schema, err := jsonschema.GenerateSchemaForType(result)
+	result := Result{
+		Location:    "London",
+		Temperature: 20.0,
+		Condition:   "Sunny",
+	}
+	jsonString, err := json.Marshal(result)
 	if err != nil {
 		log.Fatalf("GenerateSchemaForType error: %v", err)
 	}
@@ -30,17 +33,16 @@ func main() {
 		Model: openrouter.DeepseekV3,
 		Messages: []openrouter.ChatCompletionMessage{
 			{
+				Role:    openrouter.ChatMessageRoleSystem,
+				Content: "EXAMPLE JSON OUTPUT: " + string(jsonString),
+			},
+			{
 				Role:    openrouter.ChatMessageRoleUser,
 				Content: "What's the weather like in London?",
 			},
 		},
 		ResponseFormat: &openrouter.ChatCompletionResponseFormat{
-			Type: openrouter.ChatCompletionResponseFormatTypeJSONSchema,
-			JSONSchema: &openrouter.ChatCompletionResponseFormatJSONSchema{
-				Name:   "weather",
-				Schema: schema,
-				Strict: true,
-			},
+			Type: openrouter.ChatCompletionResponseFormatTypeJSONObject,
 		},
 	}
 

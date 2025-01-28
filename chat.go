@@ -17,6 +17,7 @@ const (
 	GeminiFlashExp         = "google/gemini-2.0-flash-exp:free"
 	GeminiProExp           = "google/gemini-pro-1.5-exp"
 	GeminiFlash8B          = "google/gemini-flash-1.5-8b"
+	GPT4oMini              = "openai/gpt-4o-mini"
 )
 
 // Chat message role defined by the Openrouter API.
