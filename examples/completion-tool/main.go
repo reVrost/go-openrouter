@@ -13,6 +13,7 @@ import (
 func main() {
 	ctx := context.Background()
 	client := openrouter.NewClient(os.Getenv("OPENROUTER_API_KEY"))
+	var provider *openrouter.ChatProvider
 
 	// describe the function & its inputs
 	params := jsonschema.Definition{
@@ -45,53 +46,69 @@ func main() {
 	}
 	fmt.Printf("Asking openrouter '%v' and providing it a '%v()' function...\n",
 		dialogue[0].Content, f.Name)
+
 	resp, err := client.CreateChatCompletion(ctx,
 		openrouter.ChatCompletionRequest{
-			Model:    openrouter.DeepseekV3,
+			Model:    openrouter.GeminiFlash8B,
+			Provider: provider,
 			Messages: dialogue,
 			Tools:    []openrouter.Tool{t},
 		},
 	)
-	b, _ := json.MarshalIndent(resp, "", "\t")
-	fmt.Printf("resp :\n %s", string(b))
 	if err != nil || len(resp.Choices) != 1 {
 		fmt.Printf("Completion error: err:%v len(choices):%v\n", err,
 			len(resp.Choices))
+		b, _ := json.MarshalIndent(resp, "", "\t")
+		fmt.Printf("resp :\n %s\n", string(b))
 		return
 	}
+
+	type Argument struct {
+		Location string `json:"location"`
+		Unit     string `json:"unit"`
+	}
+	b, _ := json.MarshalIndent(resp, "", "\t")
+	fmt.Printf("resp :\n %s\n", string(b))
 	msg := resp.Choices[0].Message
-	if len(msg.ToolCalls) != 1 {
-		fmt.Printf("Completion error: len(toolcalls): %v\n", len(msg.ToolCalls))
-		return
-	}
+	for len(msg.ToolCalls) > 0 {
+		dialogue = append(dialogue, msg)
+		fmt.Printf("openrouter called us back wanting to invoke our function '%v' with params '%v'\n",
+			msg.ToolCalls[0].Function.Name, msg.ToolCalls[0].Function.Arguments)
 
-	// simulate calling the function & responding to openrouter
-	dialogue = append(dialogue, msg)
-	fmt.Printf("openrouter called us back wanting to invoke our function '%v' with params '%v'\n",
-		msg.ToolCalls[0].Function.Name, msg.ToolCalls[0].Function.Arguments)
-	dialogue = append(dialogue, openrouter.ChatCompletionMessage{
-		Role:       openrouter.ChatMessageRoleTool,
-		Content:    "Sunny and 80 degrees.",
-		Name:       msg.ToolCalls[0].Function.Name,
-		ToolCallID: msg.ToolCalls[0].ID,
-	})
-	fmt.Printf("Sending openrouter our '%v()' function's response and requesting the reply to the original question...\n",
-		f.Name)
-	resp, err = client.CreateChatCompletion(ctx,
-		openrouter.ChatCompletionRequest{
-			Model:    openrouter.DeepseekV3,
-			Messages: dialogue,
-			Tools:    []openrouter.Tool{t},
-		},
-	)
-	if err != nil || len(resp.Choices) != 1 {
-		fmt.Printf("2nd completion error: err:%v len(choices):%v\n", err,
-			len(resp.Choices))
-		return
-	}
+		args := Argument{}
+		if err := json.Unmarshal([]byte(msg.ToolCalls[0].Function.Arguments), &args); err != nil {
+			fmt.Printf("Error unmarshalling arguments: %v\n", err)
+			return
+		}
+		content := ""
+		if args.Unit == "celsius" {
+			content = "Sunny and 26 degrees."
+		} else {
+			content = "Sunny and 80 degrees."
+		}
+		dialogue = append(dialogue, openrouter.ChatCompletionMessage{
+			Role:       openrouter.ChatMessageRoleTool,
+			Content:    content,
+			ToolCallID: msg.ToolCalls[0].ID,
+		})
 
-	// display openrouter's response to the original question utilizing our function
-	msg = resp.Choices[0].Message
-	fmt.Printf("openrouter answered the original request with: %v\n",
-		msg.Content)
+		// simulate calling the function & responding to openrouter
+		fmt.Println("Sending openrouter function's response and requesting the reply to the original question...")
+		resp, err = client.CreateChatCompletion(ctx,
+			openrouter.ChatCompletionRequest{
+				Model:    openrouter.GeminiFlash8B,
+				Provider: provider,
+				Messages: dialogue,
+				Tools:    []openrouter.Tool{t},
+			},
+		)
+		if err != nil || len(resp.Choices) != 1 {
+			fmt.Printf("Tool completion error: err:%v len(choices):%v\n", err,
+				len(resp.Choices))
+			return
+		}
+
+		msg = resp.Choices[0].Message
+	}
+	fmt.Printf("openrouter answered the original request with: %v\n", msg.Content)
 }

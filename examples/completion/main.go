@@ -16,10 +16,15 @@ func main() {
 		Model: openrouter.DeepseekV3,
 		Messages: []openrouter.ChatCompletionMessage{
 			{
+				Role:    openrouter.ChatMessageRoleSystem,
+				Content: "You are a helfpul assistant.",
+			},
+			{
 				Role:    openrouter.ChatMessageRoleUser,
-				Content: "Hello! Respond with just 'world'",
+				Content: "Hello!",
 			},
 		},
+		Stream: false,
 	}
 
 	res, err := client.CreateChatCompletion(ctx, request)

@@ -4,7 +4,6 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
-	"fmt"
 	"net/http"
 )
 
@@ -17,6 +16,7 @@ const (
 	Phi3Mini               = "microsoft/phi-3-mini-128k-instruct:free"
 	GeminiFlashExp         = "google/gemini-2.0-flash-exp:free"
 	GeminiProExp           = "google/gemini-pro-1.5-exp"
+	GeminiFlash8B          = "google/gemini-flash-1.5-8b"
 )
 
 // Chat message role defined by the Openrouter API.
@@ -37,6 +37,7 @@ var (
 
 type ChatCompletionRequest struct {
 	Model    string                  `json:"model"`
+	Provider *ChatProvider           `json:"provider,omitempty"`
 	Messages []ChatCompletionMessage `json:"messages"`
 	// MaxTokens The maximum number of tokens that can be generated in the chat completion.
 	// This value can be used to control costs for text generated via API.
@@ -86,6 +87,13 @@ type ChatCompletionRequest struct {
 	Metadata map[string]string `json:"metadata,omitempty"`
 }
 
+type ChatProvider struct {
+	// The order of the providers in the list determines the order in which they are called.
+	Order []string `json:"order"`
+	// Allow fallbacks to other providers if the primary provider fails.
+	AllowFallbacks bool `json:"allow_fallbacks"`
+}
+
 // ChatCompletionResponse represents a response structure for chat completion API.
 type ChatCompletionResponse struct {
 	ID                string                 `json:"id"`
@@ -96,7 +104,7 @@ type ChatCompletionResponse struct {
 	Usage             Usage                  `json:"usage"`
 	SystemFingerprint string                 `json:"system_fingerprint"`
 
-	http.Header
+	// http.Header
 }
 
 type TopLogProbs struct {
@@ -149,9 +157,8 @@ type ChatCompletionChoice struct {
 	// function_call: The model decided to call a function
 	// content_filter: Omitted content due to a flag from our content filters
 	// null: API response still in progress or incomplete
-	FinishReason         FinishReason         `json:"finish_reason"`
-	LogProbs             *LogProbs            `json:"logprobs,omitempty"`
-	ContentFilterResults ContentFilterResults `json:"content_filter_results,omitempty"`
+	FinishReason FinishReason `json:"finish_reason"`
+	LogProbs     *LogProbs    `json:"logprobs,omitempty"`
 }
 
 type StreamOptions struct {
@@ -221,16 +228,16 @@ type ChatMessageImageURL struct {
 }
 
 type ChatCompletionMessage struct {
-	Role         string `json:"role"`
-	Content      string `json:"content"`
-	Refusal      string `json:"refusal,omitempty"`
-	MultiContent []ChatMessagePart
+	Role    string `json:"role"`
+	Content string `json:"content"`
+	Refusal string `json:"refusal,omitempty"`
+	// MultiContent []ChatMessagePart
 
 	// This property isn't in the official documentation, but it's in
 	// the documentation for the official library for python:
 	// - https://github.com/openai/openai-python/blob/main/chatml.md
 	// - https://github.com/openai/openai-cookbook/blob/main/examples/How_to_count_tokens_with_tiktoken.ipynb
-	Name string `json:"name,omitempty"`
+	// Name string `json:"name,omitempty"`
 
 	FunctionCall *FunctionCall `json:"function_call,omitempty"`
 
@@ -266,42 +273,6 @@ type FunctionCall struct {
 	Arguments string `json:"arguments,omitempty"`
 }
 
-type Hate struct {
-	Filtered bool   `json:"filtered"`
-	Severity string `json:"severity,omitempty"`
-}
-type SelfHarm struct {
-	Filtered bool   `json:"filtered"`
-	Severity string `json:"severity,omitempty"`
-}
-type Sexual struct {
-	Filtered bool   `json:"filtered"`
-	Severity string `json:"severity,omitempty"`
-}
-type Violence struct {
-	Filtered bool   `json:"filtered"`
-	Severity string `json:"severity,omitempty"`
-}
-
-type JailBreak struct {
-	Filtered bool `json:"filtered"`
-	Detected bool `json:"detected"`
-}
-
-type Profanity struct {
-	Filtered bool `json:"filtered"`
-	Detected bool `json:"detected"`
-}
-
-type ContentFilterResults struct {
-	Hate      Hate      `json:"hate,omitempty"`
-	SelfHarm  SelfHarm  `json:"self_harm,omitempty"`
-	Sexual    Sexual    `json:"sexual,omitempty"`
-	Violence  Violence  `json:"violence,omitempty"`
-	JailBreak JailBreak `json:"jailbreak,omitempty"`
-	Profanity Profanity `json:"profanity,omitempty"`
-}
-
 func isSupportingModel(suffix, model string) bool {
 	return true
 }
@@ -330,8 +301,6 @@ func (c *Client) CreateChatCompletion(
 	if err != nil {
 		return
 	}
-	b, _ := json.MarshalIndent(request, "", "\t")
-	fmt.Printf("request :\n %s", string(b))
 
 	err = c.sendRequest(req, &response)
 	return
