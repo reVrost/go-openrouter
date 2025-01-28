@@ -65,6 +65,8 @@ func main() {
 
 **Note:** Your API key is sensitive information. Do not share it with anyone.
 
+For deepseek models, sometimes its better to use openrouter integration feature and pass in your own API key into the control panel for better performance, as openrouter will use your API key to make requests to the underlying model which potentially avoids shared rate limits.
+
 ### Other examples:
 
 <details>
@@ -124,7 +126,7 @@ func main() {
 </details>
 
 <details>
-<summary>GPT-3 completion</summary>
+<summary>GPT-4 completion</summary>
 
 ```go
 package main
@@ -140,7 +142,7 @@ func main() {
 	ctx := context.Background()
 
 	req := openrouter.CompletionRequest{
-		Model:     openrouter.GPT3Babbage002,
+		Model:     openrouter.GPT4o,
 		MaxTokens: 5,
 		Prompt:    "Lorem ipsum",
 	}
@@ -156,7 +158,7 @@ func main() {
 </details>
 
 <details>
-<summary>GPT-3 streaming completion</summary>
+<summary>GPT-4 streaming completion</summary>
 
 ```go
 package main
@@ -174,7 +176,7 @@ func main() {
 	ctx := context.Background()
 
 	req := openrouter.CompletionRequest{
-		Model:     openrouter.GPT3Babbage002,
+		Model:     openrouter.GPT4o,
 		MaxTokens: 5,
 		Prompt:    "Lorem ipsum",
 		Stream:    true,
@@ -200,80 +202,6 @@ func main() {
 
 
 		fmt.Printf("Stream response: %v\n", response)
-	}
-}
-```
-
-</details>
-
-<details>
-<summary>Audio Speech-To-Text</summary>
-
-```go
-package main
-
-import (
-	"context"
-	"fmt"
-
-	openrouter "github.com/revrost/go-openrouter"
-)
-
-func main() {
-	c := openrouter.NewClient("your token")
-	ctx := context.Background()
-
-	req := openrouter.AudioRequest{
-		Model:    openrouter.Whisper1,
-		FilePath: "recording.mp3",
-	}
-	resp, err := c.CreateTranscription(ctx, req)
-	if err != nil {
-		fmt.Printf("Transcription error: %v\n", err)
-		return
-	}
-	fmt.Println(resp.Text)
-}
-```
-
-</details>
-
-<details>
-<summary>Audio Captions</summary>
-
-```go
-package main
-
-import (
-	"context"
-	"fmt"
-	"os"
-
-	openrouter "github.com/revrost/go-openrouter"
-)
-
-func main() {
-	c := openrouter.NewClient(os.Getenv("openrouter_KEY"))
-
-	req := openrouter.AudioRequest{
-		Model:    openrouter.Whisper1,
-		FilePath: os.Args[1],
-		Format:   openrouter.AudioResponseFormatSRT,
-	}
-	resp, err := c.CreateTranscription(context.Background(), req)
-	if err != nil {
-		fmt.Printf("Transcription error: %v\n", err)
-		return
-	}
-	f, err := os.Create(os.Args[1] + ".srt")
-	if err != nil {
-		fmt.Printf("Could not open file: %v\n", err)
-		return
-	}
-	defer f.Close()
-	if _, err := f.WriteString(resp.Text); err != nil {
-		fmt.Printf("Error writing to file: %v\n", err)
-		return
 	}
 }
 ```
@@ -331,91 +259,52 @@ The `Parameters` field of a `FunctionDefinition` can accept either of the above 
 </details>
 
 <details>
-<summary>Error handling</summary>
-
-Open-AI maintains clear documentation on how to [handle API errors](https://platform.openrouter.com/docs/guides/error-codes/api-errors)
-
-example:
-
-```
-e := &openrouter.APIError{}
-if errors.As(err, &e) {
-  switch e.HTTPStatusCode {
-    case 401:
-      // invalid auth or key (do not retry)
-    case 429:
-      // rate limiting or engine overload (wait and retry)
-    case 500:
-      // openrouter server error (retry)
-    default:
-      // unhandled
-  }
-}
-
-```
-
-</details>
-
-<details>
 <summary>Structured Outputs</summary>
 
 ```go
-package main
-
-import (
-	"context"
-	"fmt"
-	"log"
-
-	"github.com/revrost/go-openrouter"
-	"github.com/revrost/go-openrouter/jsonschema"
-)
-
 func main() {
-	client := openrouter.NewClient("your token")
 	ctx := context.Background()
+	client := openrouter.NewClient(os.Getenv("OPENROUTER_API_KEY"))
 
 	type Result struct {
-		Steps []struct {
-			Explanation string `json:"explanation"`
-			Output      string `json:"output"`
-		} `json:"steps"`
-		FinalAnswer string `json:"final_answer"`
+		Location    string  `json:"location"`
+		Temperature float64 `json:"temperature"`
+		Condition   string  `json:"condition"`
 	}
 	var result Result
 	schema, err := jsonschema.GenerateSchemaForType(result)
 	if err != nil {
 		log.Fatalf("GenerateSchemaForType error: %v", err)
 	}
-	resp, err := client.CreateChatCompletion(ctx, openrouter.ChatCompletionRequest{
-		Model: openrouter.GPT4oMini,
+
+	request := openrouter.ChatCompletionRequest{
+		Model: openrouter.DeepseekV3,
 		Messages: []openrouter.ChatCompletionMessage{
 			{
-				Role:    openrouter.ChatMessageRoleSystem,
-				Content: "You are a helpful math tutor. Guide the user through the solution step by step.",
-			},
-			{
 				Role:    openrouter.ChatMessageRoleUser,
-				Content: "how can I solve 8x + 7 = -23",
+				Content: "What's the weather like in London?",
 			},
 		},
 		ResponseFormat: &openrouter.ChatCompletionResponseFormat{
 			Type: openrouter.ChatCompletionResponseFormatTypeJSONSchema,
 			JSONSchema: &openrouter.ChatCompletionResponseFormatJSONSchema{
-				Name:   "math_reasoning",
+				Name:   "weather",
 				Schema: schema,
 				Strict: true,
 			},
 		},
-	})
-	if err != nil {
-		log.Fatalf("CreateChatCompletion error: %v", err)
 	}
-	err = schema.Unmarshal(resp.Choices[0].Message.Content, &result)
+
+	pj, _ := json.MarshalIndent(request, "", "\t")
+	fmt.Printf("request :\n %s\n", string(pj))
+
+	res, err := client.CreateChatCompletion(ctx, request)
 	if err != nil {
-		log.Fatalf("Unmarshal schema error: %v", err)
+		fmt.Println("error", err)
+	} else {
+		b, _ := json.MarshalIndent(res, "", "\t")
+		fmt.Printf("response :\n %s", string(b))
 	}
-	fmt.Println(result)
 }
 ```
 
