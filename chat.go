@@ -50,12 +50,16 @@ type ChatCompletionRequest struct {
 	MaxCompletionTokens int                           `json:"max_completion_tokens,omitempty"`
 	Temperature         float32                       `json:"temperature,omitempty"`
 	TopP                float32                       `json:"top_p,omitempty"`
+	TopK                int                           `json:"top_k,omitempty"`
+	TopA                float32                       `json:"top_a,omitempty"`
 	N                   int                           `json:"n,omitempty"`
 	Stream              bool                          `json:"stream,omitempty"`
 	Stop                []string                      `json:"stop,omitempty"`
 	PresencePenalty     float32                       `json:"presence_penalty,omitempty"`
+	RepetitionPenalty   float32                       `json:"repetition_penalty,omitempty"`
 	ResponseFormat      *ChatCompletionResponseFormat `json:"response_format,omitempty"`
 	Seed                *int                          `json:"seed,omitempty"`
+	MinP                float32                       `json:"min_p,omitempty"`
 	FrequencyPenalty    float32                       `json:"frequency_penalty,omitempty"`
 	// LogitBias is must be a token id string (specified by their token ID in the tokenizer), not a word string.
 	// incorrect: `"logit_bias":{"You": 6}`, correct: `"logit_bias":{"1639": 6}`
