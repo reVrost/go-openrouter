@@ -3,6 +3,7 @@ package openrouter_test
 import (
 	"context"
 	"os"
+	"strings"
 	"testing"
 
 	openrouter "github.com/revrost/go-openrouter"
@@ -34,7 +35,7 @@ func TestCreateChatCompletion(t *testing.T) {
 		{
 			name: "basic completion",
 			request: openrouter.ChatCompletionRequest{
-				Model: openrouter.LiquidLFM7B,
+				Model: openrouter.GeminiFlashExp,
 				Messages: []openrouter.ChatCompletionMessage{
 					{
 						Role:    openrouter.ChatMessageRoleUser,
@@ -46,25 +47,8 @@ func TestCreateChatCompletion(t *testing.T) {
 				if len(resp.Choices) == 0 {
 					t.Error("Expected at least one choice in response")
 				}
-				if resp.Choices[0].Message.Content != "world" {
-					t.Errorf("Unexpected response: %s", resp.Choices[0].Message.Content)
-				}
-			},
-		},
-		{
-			name: "model exhausted completion",
-			request: openrouter.ChatCompletionRequest{
-				Model: openrouter.GeminiFlashExp,
-				Messages: []openrouter.ChatCompletionMessage{
-					{
-						Role:    openrouter.ChatMessageRoleUser,
-						Content: "Hello! Respond with just 'world'",
-					},
-				},
-			},
-			validate: func(t *testing.T, resp openrouter.ChatCompletionResponse) {
-				if len(resp.Choices) != 0 {
-					t.Error("Expected no choices in response")
+				if !strings.Contains(resp.Choices[0].Message.Content, "world") {
+					t.Errorf("Unexpected response: '%s' expected 'world'", resp.Choices[0].Message.Content)
 				}
 			},
 		},

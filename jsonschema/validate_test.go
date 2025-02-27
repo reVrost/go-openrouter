@@ -135,7 +135,7 @@ func TestUnmarshal(t *testing.T) {
 				Integer int    `json:"integer"`
 			}{},
 		}, false},
-		{"validate integer failed", args{
+		{"validate integer passes but truncates", args{
 			schema: jsonschema.Definition{
 				Type: jsonschema.Object,
 				Properties: map[string]jsonschema.Definition{
