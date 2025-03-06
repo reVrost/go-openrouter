@@ -90,6 +90,9 @@ type ChatCompletionRequest struct {
 	Store bool `json:"store,omitempty"`
 	// Metadata to store with the completion.
 	Metadata map[string]string `json:"metadata,omitempty"`
+	// Apply message transforms
+	// https://openrouter.ai/docs/features/message-transforms
+	Transforms []string `json:"transforms,omitempty"`
 }
 
 type ChatProvider struct {
