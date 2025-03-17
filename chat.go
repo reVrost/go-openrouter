@@ -222,6 +222,11 @@ type ChatMessagePart struct {
 	ImageURL *ChatMessageImageURL `json:"image_url,omitempty"`
 }
 
+type ChatContent struct {
+	content      string
+	multiContent []ChatMessagePart
+}
+
 type ImageURLDetail string
 
 const (
@@ -236,9 +241,16 @@ type ChatMessageImageURL struct {
 }
 
 type ChatCompletionMessage struct {
-	Role    string `json:"role"`
-	Content string `json:"content"`
-	Refusal string `json:"refusal,omitempty"`
+	Role string `json:"role"`
+	// Deprecated: Content is retained for historical compatibility
+	// and should not be used.
+	// Use ContentValue instead, along with NewContent() or NewMultiContent()
+	// to obtain a ContentValue struct.
+	Content string `json:"content,omitzero"`
+
+	// ContentValue is the recommended field for setting content.
+	ContentValue ChatContent `json:"content,omitzero"`
+	Refusal      string      `json:"refusal,omitempty"`
 	// MultiContent []ChatMessagePart
 
 	// This property isn't in the official documentation, but it's in
@@ -254,6 +266,53 @@ type ChatCompletionMessage struct {
 
 	// For Role=tool prompts this should be set to the ID given in the assistant's prior request to call a tool.
 	ToolCallID string `json:"tool_call_id,omitempty"`
+}
+
+// MarshalJSON is customized to handle the ambiguity between the deprecated field `Content`
+// and the new field `ContentValue`, both of which map to the JSON tag "content".
+// This ensures backward compatibility while allowing for future deprecation of `Content`.
+func (c ChatCompletionMessage) MarshalJSON() ([]byte, error) {
+	// Create a new struct to garanted a order
+	type Temp struct {
+		Role         string        `json:"role"`
+		Content      any           `json:"content,omitzero"`
+		Refusal      string        `json:"refusal,omitempty"`
+		FunctionCall *FunctionCall `json:"function_call,omitempty"`
+		ToolCalls    []ToolCall    `json:"tool_calls,omitempty"`
+		ToolCallID   string        `json:"tool_call_id,omitempty"`
+	}
+
+	temp := Temp{
+		Role:         c.Role,
+		Refusal:      c.Refusal,
+		FunctionCall: c.FunctionCall,
+		ToolCalls:    c.ToolCalls,
+		ToolCallID:   c.ToolCallID,
+	}
+
+	if c.Content != "" {
+		temp.Content = c.Content
+	} else {
+		temp.Content = c.ContentValue
+	}
+
+	return json.Marshal(temp)
+}
+
+func (c ChatContent) MarshalJSON() ([]byte, error) {
+	if len(c.multiContent) > 0 {
+		return json.Marshal(c.multiContent)
+	}
+
+	return json.Marshal(c.content)
+}
+
+func NewContent(text string) ChatContent {
+	return ChatContent{content: text}
+}
+
+func NewMultiContent(parts []ChatMessagePart) ChatContent {
+	return ChatContent{multiContent: parts}
 }
 
 type Tool struct {
