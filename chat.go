@@ -222,11 +222,6 @@ type ChatMessagePart struct {
 	ImageURL *ChatMessageImageURL `json:"image_url,omitempty"`
 }
 
-type ChatContent struct {
-	content      string
-	multiContent []ChatMessagePart
-}
-
 type ImageURLDetail string
 
 const (
@@ -241,17 +236,10 @@ type ChatMessageImageURL struct {
 }
 
 type ChatCompletionMessage struct {
-	Role string `json:"role"`
-	// Deprecated: Content is retained for historical compatibility
-	// and should not be used.
-	// Use ContentValue instead, along with NewContent() or NewMultiContent()
-	// to obtain a ContentValue struct.
-	Content string `json:"content,omitzero"`
-
-	// ContentValue is the recommended field for setting content.
-	ContentValue ChatContent `json:"content,omitzero"`
-	Refusal      string      `json:"refusal,omitempty"`
-	// MultiContent []ChatMessagePart
+	Role         string            `json:"role"`
+	Content      string            `json:"content,omitzero"`
+	MultiContent []ChatMessagePart `json:"content,omitzero"`
+	Refusal      string            `json:"refusal,omitempty"`
 
 	// This property isn't in the official documentation, but it's in
 	// the documentation for the official library for python:
@@ -268,11 +256,11 @@ type ChatCompletionMessage struct {
 	ToolCallID string `json:"tool_call_id,omitempty"`
 }
 
-// MarshalJSON is customized to handle the ambiguity between the deprecated field `Content`
-// and the new field `ContentValue`, both of which map to the JSON tag "content".
-// This ensures backward compatibility while allowing for future deprecation of `Content`.
+// MarshalJSON implements custom JSON serialization for ChatCompletionMessage.
+// It ensures a consistent field order and prioritizes `Content` over `MultiContent`
+// when setting the "content" field in the output JSON.
 func (c ChatCompletionMessage) MarshalJSON() ([]byte, error) {
-	// Create a new struct to garanted a order
+	// Define a temporary struct to control field serialization.
 	type Temp struct {
 		Role         string        `json:"role"`
 		Content      any           `json:"content,omitzero"`
@@ -293,26 +281,10 @@ func (c ChatCompletionMessage) MarshalJSON() ([]byte, error) {
 	if c.Content != "" {
 		temp.Content = c.Content
 	} else {
-		temp.Content = c.ContentValue
+		temp.Content = c.MultiContent
 	}
 
 	return json.Marshal(temp)
-}
-
-func (c ChatContent) MarshalJSON() ([]byte, error) {
-	if len(c.multiContent) > 0 {
-		return json.Marshal(c.multiContent)
-	}
-
-	return json.Marshal(c.content)
-}
-
-func NewContent(text string) ChatContent {
-	return ChatContent{content: text}
-}
-
-func NewMultiContent(parts []ChatMessagePart) ChatContent {
-	return ChatContent{multiContent: parts}
 }
 
 type Tool struct {
