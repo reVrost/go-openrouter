@@ -278,7 +278,7 @@ func (c ChatCompletionMessage) MarshalJSON() ([]byte, error) {
 		ToolCallID:   c.ToolCallID,
 	}
 
-	if c.Content != "" {
+	if len(c.MultiContent) == 0 {
 		temp.Content = c.Content
 	} else {
 		temp.Content = c.MultiContent
