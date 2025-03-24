@@ -236,10 +236,10 @@ type ChatMessageImageURL struct {
 }
 
 type ChatCompletionMessage struct {
-	Role    string `json:"role"`
-	Content string `json:"content"`
-	Refusal string `json:"refusal,omitempty"`
-	// MultiContent []ChatMessagePart
+	Role         string            `json:"role"`
+	Content      string            `json:"content,omitzero"`
+	MultiContent []ChatMessagePart `json:"content,omitzero"`
+	Refusal      string            `json:"refusal,omitempty"`
 
 	// This property isn't in the official documentation, but it's in
 	// the documentation for the official library for python:
@@ -254,6 +254,37 @@ type ChatCompletionMessage struct {
 
 	// For Role=tool prompts this should be set to the ID given in the assistant's prior request to call a tool.
 	ToolCallID string `json:"tool_call_id,omitempty"`
+}
+
+// MarshalJSON implements custom JSON serialization for ChatCompletionMessage.
+// It ensures a consistent field order and prioritizes `Content` over `MultiContent`
+// when setting the "content" field in the output JSON.
+func (c ChatCompletionMessage) MarshalJSON() ([]byte, error) {
+	// Define a temporary struct to control field serialization.
+	type Temp struct {
+		Role         string        `json:"role"`
+		Content      any           `json:"content,omitzero"`
+		Refusal      string        `json:"refusal,omitempty"`
+		FunctionCall *FunctionCall `json:"function_call,omitempty"`
+		ToolCalls    []ToolCall    `json:"tool_calls,omitempty"`
+		ToolCallID   string        `json:"tool_call_id,omitempty"`
+	}
+
+	temp := Temp{
+		Role:         c.Role,
+		Refusal:      c.Refusal,
+		FunctionCall: c.FunctionCall,
+		ToolCalls:    c.ToolCalls,
+		ToolCallID:   c.ToolCallID,
+	}
+
+	if len(c.MultiContent) == 0 {
+		temp.Content = c.Content
+	} else {
+		temp.Content = c.MultiContent
+	}
+
+	return json.Marshal(temp)
 }
 
 type Tool struct {
