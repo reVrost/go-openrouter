@@ -39,7 +39,7 @@ func TestCreateChatCompletion(t *testing.T) {
 				Messages: []openrouter.ChatCompletionMessage{
 					{
 						Role:    openrouter.ChatMessageRoleUser,
-						Content: "Hello! Respond with just 'world'",
+						Content: openrouter.Content{Text: "Hello! Respond with just 'world'"},
 					},
 				},
 			},
@@ -47,8 +47,8 @@ func TestCreateChatCompletion(t *testing.T) {
 				if len(resp.Choices) == 0 {
 					t.Error("Expected at least one choice in response")
 				}
-				if !strings.Contains(resp.Choices[0].Message.Content, "world") {
-					t.Errorf("Unexpected response: '%s' expected 'world'", resp.Choices[0].Message.Content)
+				if !strings.Contains(resp.Choices[0].Message.Content.Text, "world") {
+					t.Errorf("Unexpected response: '%s' expected 'world'", resp.Choices[0].Message.Content.Text)
 				}
 			},
 		},
@@ -57,7 +57,7 @@ func TestCreateChatCompletion(t *testing.T) {
 			request: openrouter.ChatCompletionRequest{
 				Model: "invalid-model",
 				Messages: []openrouter.ChatCompletionMessage{
-					{Role: openrouter.ChatMessageRoleUser, Content: "Hello"},
+					{Role: openrouter.ChatMessageRoleUser, Content: openrouter.Content{Text: "Hello"}},
 				},
 			},
 			wantErr: true,
@@ -68,7 +68,7 @@ func TestCreateChatCompletion(t *testing.T) {
 				Model:  openrouter.LiquidLFM7B,
 				Stream: true,
 				Messages: []openrouter.ChatCompletionMessage{
-					{Role: openrouter.ChatMessageRoleUser, Content: "Hello"},
+					{Role: openrouter.ChatMessageRoleUser, Content: openrouter.Content{Text: "Hello"}},
 				},
 			},
 			wantErr: true,
@@ -99,7 +99,7 @@ func TestAuthFailure(t *testing.T) {
 	_, err := client.CreateChatCompletion(context.Background(), openrouter.ChatCompletionRequest{
 		Model: openrouter.LiquidLFM7B,
 		Messages: []openrouter.ChatCompletionMessage{
-			{Role: openrouter.ChatMessageRoleUser, Content: "Hello"},
+			{Role: openrouter.ChatMessageRoleUser, Content: openrouter.Content{Text: "Hello"}},
 		},
 	})
 

@@ -34,11 +34,11 @@ func main() {
 		Messages: []openrouter.ChatCompletionMessage{
 			{
 				Role:    openrouter.ChatMessageRoleSystem,
-				Content: "EXAMPLE JSON OUTPUT: " + string(jsonString),
+				Content: openrouter.Content{Text: "EXAMPLE JSON OUTPUT: " + string(jsonString)},
 			},
 			{
 				Role:    openrouter.ChatMessageRoleUser,
-				Content: "What's the weather like in London?",
+				Content: openrouter.Content{Text: "What's the weather like in London?"},
 			},
 		},
 		ResponseFormat: &openrouter.ChatCompletionResponseFormat{

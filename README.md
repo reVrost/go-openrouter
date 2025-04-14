@@ -38,7 +38,7 @@ func main() {
 			Messages: []openrouter.ChatCompletionMessage{
 				{
 					Role:    openrouter.ChatMessageRoleUser,
-					Content: "Hello!",
+					Content: openrouter.Content{Text: "Hello!"},
 				},
 			},
 		},
@@ -93,7 +93,7 @@ func main() {
 		Messages: []openrouter.ChatCompletionMessage{
 			{
 				Role:    openrouter.ChatMessageRoleUser,
-				Content: "Lorem ipsum",
+				Content: openrouter.Content{Text: "Lorem ipsum"},
 			},
 		},
 		Stream: true,
@@ -119,89 +119,6 @@ func main() {
 		}
 
 		fmt.Printf(response.Choices[0].Delta.Content)
-	}
-}
-```
-
-</details>
-
-<details>
-<summary>GPT-4 completion</summary>
-
-```go
-package main
-
-import (
-	"context"
-	"fmt"
-	openrouter "github.com/revrost/go-openrouter"
-)
-
-func main() {
-	c := openrouter.NewClient("your token")
-	ctx := context.Background()
-
-	req := openrouter.CompletionRequest{
-		Model:     openrouter.GPT4o,
-		MaxTokens: 5,
-		Prompt:    "Lorem ipsum",
-	}
-	resp, err := c.CreateCompletion(ctx, req)
-	if err != nil {
-		fmt.Printf("Completion error: %v\n", err)
-		return
-	}
-	fmt.Println(resp.Choices[0].Text)
-}
-```
-
-</details>
-
-<details>
-<summary>GPT-4 streaming completion</summary>
-
-```go
-package main
-
-import (
-	"errors"
-	"context"
-	"fmt"
-	"io"
-	openrouter "github.com/revrost/go-openrouter"
-)
-
-func main() {
-	c := openrouter.NewClient("your token")
-	ctx := context.Background()
-
-	req := openrouter.CompletionRequest{
-		Model:     openrouter.GPT4o,
-		MaxTokens: 5,
-		Prompt:    "Lorem ipsum",
-		Stream:    true,
-	}
-	stream, err := c.CreateCompletionStream(ctx, req)
-	if err != nil {
-		fmt.Printf("CompletionStream error: %v\n", err)
-		return
-	}
-	defer stream.Close()
-
-	for {
-		response, err := stream.Recv()
-		if errors.Is(err, io.EOF) {
-			fmt.Println("Stream finished")
-			return
-		}
-
-		if err != nil {
-			fmt.Printf("Stream error: %v\n", err)
-			return
-		}
-
-
-		fmt.Printf("Stream response: %v\n", response)
 	}
 }
 ```
@@ -282,7 +199,7 @@ func main() {
 		Messages: []openrouter.ChatCompletionMessage{
 			{
 				Role:    openrouter.ChatMessageRoleUser,
-				Content: "What's the weather like in London?",
+				Content: openrouter.Content{Text: "What's the weather like in London?"},
 			},
 		},
 		ResponseFormat: &openrouter.ChatCompletionResponseFormat{

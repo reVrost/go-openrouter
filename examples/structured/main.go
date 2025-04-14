@@ -31,7 +31,7 @@ func main() {
 		Messages: []openrouter.ChatCompletionMessage{
 			{
 				Role:    openrouter.ChatMessageRoleUser,
-				Content: "What's the weather like in London?",
+				Content: openrouter.Content{Text: "What's the weather like in London?"},
 			},
 		},
 		ResponseFormat: &openrouter.ChatCompletionResponseFormat{

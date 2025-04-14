@@ -42,7 +42,7 @@ func main() {
 
 	// simulate user asking a question that requires the function
 	dialogue := []openrouter.ChatCompletionMessage{
-		{Role: openrouter.ChatMessageRoleUser, Content: "What is the weather in Boston today?"},
+		{Role: openrouter.ChatMessageRoleUser, Content: openrouter.Content{Text: "What is the weather in Boston today?"}},
 	}
 	fmt.Printf("Asking openrouter '%v' and providing it a '%v()' function...\n",
 		dialogue[0].Content, f.Name)
@@ -88,7 +88,7 @@ func main() {
 		}
 		dialogue = append(dialogue, openrouter.ChatCompletionMessage{
 			Role:       openrouter.ChatMessageRoleTool,
-			Content:    content,
+			Content:    openrouter.Content{Text: content},
 			ToolCallID: msg.ToolCalls[0].ID,
 		})
 

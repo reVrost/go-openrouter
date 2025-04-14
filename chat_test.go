@@ -24,8 +24,8 @@ func TestChatCompletionMessageMarshalJSON_MultiContent(t *testing.T) {
 		},
 	}
 	message := openrouter.ChatCompletionMessage{
-		Role:         openrouter.ChatMessageRoleUser,
-		MultiContent: parts,
+		Role:    openrouter.ChatMessageRoleUser,
+		Content: openrouter.Content{Multi: parts},
 	}
 
 	expected := `{"role":"user","content":[{"type":"text","text":"What is in this image?"},{"type":"image_url","image_url":{"url":"https://upload.wikimedia.org/wikipedia/commons/thumb/d/dd/Gfp-wisconsin-madison-the-nature-boardwalk.jpg/2560px-Gfp-wisconsin-madison-the-nature-boardwalk.jpg"}}]}`
@@ -36,7 +36,7 @@ func TestChatCompletionMessageMarshalJSON_MultiContent(t *testing.T) {
 func TestChatCompletionMessageMarshalJSON_Content(t *testing.T) {
 	message := openrouter.ChatCompletionMessage{
 		Role:    openrouter.ChatMessageRoleUser,
-		Content: "This is a simple content",
+		Content: openrouter.Content{Text: "This is a simple content"},
 	}
 
 	expected := `{"role":"user","content":"This is a simple content"}`

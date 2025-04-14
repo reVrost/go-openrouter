@@ -17,11 +17,11 @@ func main() {
 		Messages: []openrouter.ChatCompletionMessage{
 			{
 				Role:    openrouter.ChatMessageRoleSystem,
-				Content: "You are a helfpul assistant.",
+				Content: openrouter.Content{Text: "You are a helfpul assistant."},
 			},
 			{
 				Role:    openrouter.ChatMessageRoleUser,
-				Content: "Hello!",
+				Content: openrouter.Content{Text: "Hello!"},
 			},
 		},
 		Stream: false,

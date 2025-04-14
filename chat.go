@@ -235,11 +235,16 @@ type ChatMessageImageURL struct {
 	Detail ImageURLDetail `json:"detail,omitempty"`
 }
 
+// Content handles both string and multi-part content.
+type Content struct {
+	Text  string
+	Multi []ChatMessagePart
+}
+
 type ChatCompletionMessage struct {
-	Role         string            `json:"role"`
-	Content      string            `json:"content,omitzero"`
-	MultiContent []ChatMessagePart `json:"content,omitzero"`
-	Refusal      string            `json:"refusal,omitempty"`
+	Role    string  `json:"role"`
+	Content Content `json:"content,omitzero"`
+	Refusal string  `json:"refusal,omitempty"`
 
 	// This property isn't in the official documentation, but it's in
 	// the documentation for the official library for python:
@@ -256,35 +261,36 @@ type ChatCompletionMessage struct {
 	ToolCallID string `json:"tool_call_id,omitempty"`
 }
 
-// MarshalJSON implements custom JSON serialization for ChatCompletionMessage.
-// It ensures a consistent field order and prioritizes `Content` over `MultiContent`
-// when setting the "content" field in the output JSON.
-func (c ChatCompletionMessage) MarshalJSON() ([]byte, error) {
-	// Define a temporary struct to control field serialization.
-	type Temp struct {
-		Role         string        `json:"role"`
-		Content      any           `json:"content,omitzero"`
-		Refusal      string        `json:"refusal,omitempty"`
-		FunctionCall *FunctionCall `json:"function_call,omitempty"`
-		ToolCalls    []ToolCall    `json:"tool_calls,omitempty"`
-		ToolCallID   string        `json:"tool_call_id,omitempty"`
+// MarshalJSON serializes ContentType as a string or array.
+func (c Content) MarshalJSON() ([]byte, error) {
+	if c.Text != "" && len(c.Multi) == 0 {
+		return json.Marshal(c.Text)
+	}
+	if len(c.Multi) > 0 && c.Text == "" {
+		return json.Marshal(c.Multi)
+	}
+	return json.Marshal(nil)
+}
+
+// UnmarshalJSON deserializes ContentType from a string or array.
+func (c *Content) UnmarshalJSON(data []byte) error {
+	var s string
+	if err := json.Unmarshal(data, &s); err == nil && s != "" {
+		c.Text = s
+		c.Multi = nil
+		return nil
 	}
 
-	temp := Temp{
-		Role:         c.Role,
-		Refusal:      c.Refusal,
-		FunctionCall: c.FunctionCall,
-		ToolCalls:    c.ToolCalls,
-		ToolCallID:   c.ToolCallID,
+	var parts []ChatMessagePart
+	if err := json.Unmarshal(data, &parts); err == nil && len(parts) > 0 {
+		c.Text = ""
+		c.Multi = parts
+		return nil
 	}
 
-	if len(c.MultiContent) == 0 {
-		temp.Content = c.Content
-	} else {
-		temp.Content = c.MultiContent
-	}
-
-	return json.Marshal(temp)
+	c.Text = ""
+	c.Multi = nil
+	return nil
 }
 
 type Tool struct {
