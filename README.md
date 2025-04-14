@@ -70,62 +70,6 @@ For deepseek models, sometimes its better to use openrouter integration feature 
 ### Other examples:
 
 <details>
-<summary>ChatGPT streaming completion</summary>
-
-```go
-package main
-
-import (
-	"context"
-	"errors"
-	"fmt"
-	"io"
-	openrouter "github.com/revrost/go-openrouter"
-)
-
-func main() {
-	c := openrouter.NewClient("your token")
-	ctx := context.Background()
-
-	req := openrouter.ChatCompletionRequest{
-		Model:     openrouter.GPT3Dot5Turbo,
-		MaxTokens: 20,
-		Messages: []openrouter.ChatCompletionMessage{
-			{
-				Role:    openrouter.ChatMessageRoleUser,
-				Content: openrouter.Content{Text: "Lorem ipsum"},
-			},
-		},
-		Stream: true,
-	}
-	stream, err := c.CreateChatCompletionStream(ctx, req)
-	if err != nil {
-		fmt.Printf("ChatCompletionStream error: %v\n", err)
-		return
-	}
-	defer stream.Close()
-
-	fmt.Printf("Stream response: ")
-	for {
-		response, err := stream.Recv()
-		if errors.Is(err, io.EOF) {
-			fmt.Println("\nStream finished")
-			return
-		}
-
-		if err != nil {
-			fmt.Printf("\nStream error: %v\n", err)
-			return
-		}
-
-		fmt.Printf(response.Choices[0].Delta.Content)
-	}
-}
-```
-
-</details>
-
-<details>
 <summary>JSON Schema for function calling</summary>
 
 ```json
