@@ -70,6 +70,46 @@ For deepseek models, sometimes its better to use openrouter integration feature 
 ### Other examples:
 
 <details>
+<summary>Streaming Response</summary>
+
+```go
+func main() {
+	ctx := context.Background()
+	client := openrouter.NewClient(os.Getenv("OPENROUTER_API_KEY"))
+
+	stream, err := client.CreateChatCompletionStream(
+		context.Background(), openrouter.ChatCompletionRequest{
+			Model: "qwen/qwq-32b:free",
+			Messages: []openrouter.ChatCompletionMessage{
+				{
+					Role:    "user",
+					Content: openrouter.Content{Text: "Hello, how are you?"}},
+			},
+			Stream: true,
+		},
+	)
+	require.NoError(t, err)
+	defer stream.Close()
+
+	for {
+		response, err := stream.Recv()
+		if err != nil && err != io.EOF {
+			require.NoError(t, err)
+		}
+		if errors.Is(err, io.EOF) {
+			fmt.Println("EOF, stream finished")
+			return
+		}
+		json, err := json.MarshalIndent(response, "", "  ")
+		require.NoError(t, err)
+		fmt.Println(string(json))
+	}
+}
+```
+
+</details>
+
+<details>
 <summary>JSON Schema for function calling</summary>
 
 ```json
