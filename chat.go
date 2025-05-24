@@ -265,8 +265,12 @@ const (
 )
 
 type ChatMessagePart struct {
-	Type     ChatMessagePartType  `json:"type,omitempty"`
-	Text     string               `json:"text,omitempty"`
+	Type ChatMessagePartType `json:"type,omitempty"`
+	Text string              `json:"text,omitempty"`
+	// Prompt caching
+	// https://openrouter.ai/docs/features/prompt-caching
+	CacheControl *CacheControl `json:"cache_control,omitempty"`
+
 	ImageURL *ChatMessageImageURL `json:"image_url,omitempty"`
 }
 
@@ -289,16 +293,21 @@ type Content struct {
 	Multi []ChatMessagePart
 }
 
+type CacheControl struct {
+	// Type only supports "ephemeral" for now.
+	Type string `json:"type"`
+	// TTL in  format of "5m" | "1h"
+	TTL *string `json:"ttl,omitempty"`
+}
+
 type ChatCompletionMessage struct {
 	Role    string  `json:"role"`
 	Content Content `json:"content,omitzero"`
 	Refusal string  `json:"refusal,omitempty"`
 
-	// This property isn't in the official documentation, but it's in
-	// the documentation for the official library for python:
-	// - https://github.com/openai/openai-python/blob/main/chatml.md
-	// - https://github.com/openai/openai-cookbook/blob/main/examples/How_to_count_tokens_with_tiktoken.ipynb
-	// Name string `json:"name,omitempty"`
+	// This property is used for the "reasoning" feature supported by deepseek-reasoner
+	// - https://api-docs.deepseek.com/api/create-chat-completion#responses
+	ReasoningContent *string `json:"reasoning_content,omitempty"`
 
 	FunctionCall *FunctionCall `json:"function_call,omitempty"`
 

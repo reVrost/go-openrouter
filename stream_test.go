@@ -39,8 +39,8 @@ func TestChatCompletionMessageMarshalJSON_Streaming(t *testing.T) {
 			fmt.Println("EOF, stream finished")
 			return
 		}
-		json, err := json.MarshalIndent(response, "", "  ")
+		_, err = json.MarshalIndent(response, "", "  ")
 		require.NoError(t, err)
-		fmt.Println(string(json))
+		// fmt.Println(string(json))
 	}
 }
