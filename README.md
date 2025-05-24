@@ -12,6 +12,14 @@ This library provides unofficial Go client for [Openrouter API](https://openrout
 go get github.com/revrost/go-openrouter
 ```
 
+## Features
+
+- [x] Chat Completion
+- [x] Streaming
+- [x] Tool calling
+- [x] Structured outputs
+- [x] Prompt caching
+
 ## Usage
 
 ### Deepseek V3 example usage:
