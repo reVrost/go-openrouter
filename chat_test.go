@@ -8,7 +8,7 @@ import (
 )
 
 // ChatCompletionMessage json.Marshal tests
-//
+
 // Tests the case where MultiContent is not empty
 func TestChatCompletionMessageMarshalJSON_MultiContent(t *testing.T) {
 	parts := []openrouter.ChatMessagePart{

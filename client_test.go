@@ -11,6 +11,7 @@ import (
 
 // Test client setup
 func createTestClient(t *testing.T) *openrouter.Client {
+	t.Helper()
 	token := os.Getenv("OPENROUTER_API_KEY")
 	if token == "" {
 		t.Skip("Skipping integration test: OPENROUTER_API_KEY not set")

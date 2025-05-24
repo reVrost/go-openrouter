@@ -1,10 +1,16 @@
 package openrouter
 
 import (
+	"bufio"
+	"bytes"
 	"context"
 	"encoding/json"
 	"errors"
+	"io"
 	"net/http"
+	"strings"
+
+	"github.com/rs/zerolog/log"
 )
 
 const (
@@ -167,6 +173,48 @@ type ChatCompletionChoice struct {
 	// null: API response still in progress or incomplete
 	FinishReason FinishReason `json:"finish_reason"`
 	LogProbs     *LogProbs    `json:"logprobs,omitempty"`
+}
+
+type PromptAnnotation struct {
+	PromptIndex          int                  `json:"prompt_index,omitempty"`
+	ContentFilterResults ContentFilterResults `json:"content_filter_results,omitempty"`
+}
+type ContentFilterResults struct {
+	Hate      Hate      `json:"hate,omitempty"`
+	SelfHarm  SelfHarm  `json:"self_harm,omitempty"`
+	Sexual    Sexual    `json:"sexual,omitempty"`
+	Violence  Violence  `json:"violence,omitempty"`
+	JailBreak JailBreak `json:"jailbreak,omitempty"`
+	Profanity Profanity `json:"profanity,omitempty"`
+}
+type PromptFilterResult struct {
+	Index                int                  `json:"index"`
+	ContentFilterResults ContentFilterResults `json:"content_filter_results,omitempty"`
+}
+type Hate struct {
+	Filtered bool   `json:"filtered"`
+	Severity string `json:"severity,omitempty"`
+}
+type SelfHarm struct {
+	Filtered bool   `json:"filtered"`
+	Severity string `json:"severity,omitempty"`
+}
+type Sexual struct {
+	Filtered bool   `json:"filtered"`
+	Severity string `json:"severity,omitempty"`
+}
+type Violence struct {
+	Filtered bool   `json:"filtered"`
+	Severity string `json:"severity,omitempty"`
+}
+
+type JailBreak struct {
+	Filtered bool `json:"filtered"`
+	Detected bool `json:"detected"`
+}
+type Profanity struct {
+	Filtered bool `json:"filtered"`
+	Detected bool `json:"detected"`
 }
 
 type StreamOptions struct {
@@ -349,4 +397,172 @@ func (c *Client) CreateChatCompletion(
 
 	err = c.sendRequest(req, &response)
 	return
+}
+
+type ChatCompletionStream struct {
+	stream   <-chan ChatCompletionStreamResponse
+	done     chan struct{}
+	response *http.Response
+}
+
+// CreateChatCompletionStream — API call to Create a completion for the chat message with streaming.
+func (c *Client) CreateChatCompletionStream(
+	ctx context.Context,
+	request ChatCompletionRequest,
+) (*ChatCompletionStream, error) {
+	if !request.Stream {
+		request.Stream = true
+	}
+
+	if !isSupportingModel(chatCompletionsSuffix, request.Model) {
+		return nil, ErrChatCompletionInvalidModel
+	}
+
+	req, err := c.newRequest(
+		ctx,
+		http.MethodPost,
+		c.fullURL(chatCompletionsSuffix),
+		withBody(request),
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	req.Header.Set("Accept", "text/event-stream")
+	req.Header.Set("Cache-Control", "no-cache")
+	req.Header.Set("Connection", "keep-alive")
+	req.Header.Set("Content-Type", "application/json")
+
+	resp, err := c.config.HTTPClient.Do(req)
+	if err != nil {
+		return nil, err
+	}
+	if isFailureStatusCode(resp) {
+		return nil, c.handleErrorResp(resp)
+	}
+
+	if resp.StatusCode != http.StatusOK {
+		resp.Body.Close()
+		return nil, errors.New("unexpected status code: " + resp.Status)
+	}
+
+	stream := make(chan ChatCompletionStreamResponse)
+	done := make(chan struct{})
+
+	go func() {
+		defer close(stream)
+		defer resp.Body.Close()
+
+		reader := bufio.NewReader(resp.Body)
+		for {
+			select {
+			case <-done:
+				return
+			default:
+				line, err := reader.ReadBytes('\n')
+				if err != nil {
+					if err == io.EOF {
+						return
+					}
+					log.Error().Err(err).Msg("failed to read chat completion stream")
+					return
+				}
+				// Ignore openrouter comments, empty lines
+				if strings.HasPrefix(string(line), ": OPENROUTER PROCESSING") ||
+					strings.HasSuffix(string(line), "[DONE]\n") ||
+					string(line) == "\n" {
+					continue
+				}
+				// Trim everything before json object from line
+				line = bytes.TrimPrefix(line, []byte("data:"))
+				// Decode object into a ChatCompletionResponse
+				var chunk ChatCompletionStreamResponse
+				if err := json.Unmarshal(line, &chunk); err != nil {
+					log.Error().Err(err).
+						Str("line", string(line)).
+						Msg("failed to decode chat completion stream")
+					return
+				}
+				stream <- chunk
+			}
+		}
+	}()
+
+	return &ChatCompletionStream{
+		stream:   stream,
+		done:     done,
+		response: resp,
+	}, nil
+}
+
+type ChatCompletionStreamChoiceDelta struct {
+	Content      string        `json:"content,omitempty"`
+	Role         string        `json:"role,omitempty"`
+	FunctionCall *FunctionCall `json:"function_call,omitempty"`
+	ToolCalls    []ToolCall    `json:"tool_calls,omitempty"`
+	Refusal      string        `json:"refusal,omitempty"`
+
+	// This property is used for the "reasoning" feature supported by deepseek-reasoner
+	// which is not in the official documentation.
+	// the doc from deepseek:
+	// - https://api-docs.deepseek.com/api/create-chat-completion#responses
+	ReasoningContent string `json:"reasoning_content,omitempty"`
+}
+type ChatCompletionStreamChoiceLogprobs struct {
+	Content []ChatCompletionTokenLogprob `json:"content,omitempty"`
+	Refusal []ChatCompletionTokenLogprob `json:"refusal,omitempty"`
+}
+type ChatCompletionTokenLogprob struct {
+	Token       string                                 `json:"token"`
+	Bytes       []int64                                `json:"bytes,omitempty"`
+	Logprob     float64                                `json:"logprob,omitempty"`
+	TopLogprobs []ChatCompletionTokenLogprobTopLogprob `json:"top_logprobs"`
+}
+type ChatCompletionTokenLogprobTopLogprob struct {
+	Token   string  `json:"token"`
+	Bytes   []int64 `json:"bytes"`
+	Logprob float64 `json:"logprob"`
+}
+type ChatCompletionStreamChoice struct {
+	Index                int                                 `json:"index"`
+	Delta                ChatCompletionStreamChoiceDelta     `json:"delta"`
+	Logprobs             *ChatCompletionStreamChoiceLogprobs `json:"logprobs,omitempty"`
+	FinishReason         FinishReason                        `json:"finish_reason"`
+	ContentFilterResults *ContentFilterResults               `json:"content_filter_results,omitempty"`
+}
+
+type ChatCompletionStreamResponse struct {
+	ID                  string                       `json:"id"`
+	Object              string                       `json:"object"`
+	Created             int64                        `json:"created"`
+	Model               string                       `json:"model"`
+	Choices             []ChatCompletionStreamChoice `json:"choices"`
+	SystemFingerprint   string                       `json:"system_fingerprint"`
+	PromptAnnotations   []PromptAnnotation           `json:"prompt_annotations,omitempty"`
+	PromptFilterResults []PromptFilterResult         `json:"prompt_filter_results,omitempty"`
+	// An optional field that will only be present when you set stream_options: {"include_usage": true} in your request.
+	// When present, it contains a null value except for the last chunk which contains the token usage statistics
+	// for the entire request.
+	Usage *Usage `json:"usage,omitempty"`
+}
+
+// Recv reads the next chunk from the stream.
+func (s *ChatCompletionStream) Recv() (ChatCompletionStreamResponse, error) {
+	select {
+	case chunk, ok := <-s.stream:
+		if !ok {
+			return ChatCompletionStreamResponse{}, io.EOF
+		}
+		return chunk, nil
+	case <-s.done:
+		return ChatCompletionStreamResponse{}, io.EOF
+	}
+}
+
+// Close terminates the stream and cleans up resources.
+func (s *ChatCompletionStream) Close() {
+	close(s.done)
+	if s.response != nil {
+		s.response.Body.Close()
+	}
 }
