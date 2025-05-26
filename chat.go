@@ -467,6 +467,9 @@ func (c *Client) CreateChatCompletionStream(
 			select {
 			case <-done:
 				return
+			case <-ctx.Done():
+				log.Info().Msg("Stream stopped due to context cancellation")
+				return
 			default:
 				line, err := reader.ReadBytes('\n')
 				if err != nil {
@@ -476,10 +479,12 @@ func (c *Client) CreateChatCompletionStream(
 					log.Error().Err(err).Msg("failed to read chat completion stream")
 					return
 				}
+				// If stream ended with done, stop immediately
+				if strings.HasSuffix(string(line), "[DONE]\n") {
+					return
+				}
 				// Ignore openrouter comments, empty lines
-				if strings.HasPrefix(string(line), ": OPENROUTER PROCESSING") ||
-					strings.HasSuffix(string(line), "[DONE]\n") ||
-					string(line) == "\n" {
+				if strings.HasPrefix(string(line), ": OPENROUTER PROCESSING") || string(line) == "\n" {
 					continue
 				}
 				// Trim everything before json object from line

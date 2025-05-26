@@ -55,3 +55,19 @@ func marshalAndValidate(t *testing.T, message openrouter.ChatCompletionMessage, 
 		t.Errorf("expected %s, got %s", expected, result)
 	}
 }
+
+func TestUnmarshalChatCompletionMessage(t *testing.T) {
+	input := `{"role":"user","content":"This is a simple content"}`
+	var message openrouter.ChatCompletionMessage
+	err := json.Unmarshal([]byte(input), &message)
+	if err != nil {
+		t.Fatalf("expected no error, got %v", err)
+	}
+
+	if message.Role != openrouter.ChatMessageRoleUser {
+		t.Errorf("expected %s, got %s", openrouter.ChatMessageRoleUser, message.Role)
+	}
+	if message.Content.Text != "This is a simple content" {
+		t.Errorf("expected %s, got %s", "This is a simple content", message.Content.Text)
+	}
+}
