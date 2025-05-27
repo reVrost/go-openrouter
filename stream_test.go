@@ -12,17 +12,22 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-// Test streaming
-func TestChatCompletionMessageMarshalJSON_Streaming(t *testing.T) {
+// Test streaming with reasoning
+func TestChatCompletionMessageMarshalJSON_StreamingWithReasoning(t *testing.T) {
+	t.Skip("Only run this test locally")
 	client := createTestClient(t)
 
 	stream, err := client.CreateChatCompletionStream(
 		context.Background(), openrouter.ChatCompletionRequest{
-			Model: "qwen/qwq-32b:free",
+			Reasoning: &openrouter.ChatCompletionReasoning{
+				Effort: openrouter.String("high"),
+			},
+			Model: "google/gemini-2.5-pro-preview",
 			Messages: []openrouter.ChatCompletionMessage{
 				{
 					Role:    "user",
-					Content: openrouter.Content{Text: "Hello, how are you?"}},
+					Content: openrouter.Content{Text: "Help me think whether i should make coffee with sugar ?"},
+				},
 			},
 			Stream: true,
 		},
@@ -39,8 +44,42 @@ func TestChatCompletionMessageMarshalJSON_Streaming(t *testing.T) {
 			fmt.Println("EOF, stream finished")
 			return
 		}
-		_, err = json.MarshalIndent(response, "", "  ")
+		b, err := json.MarshalIndent(response, "", "  ")
 		require.NoError(t, err)
-		// fmt.Println(string(json))
+		fmt.Println(string(b))
+	}
+}
+
+// Test streaming
+func TestChatCompletionMessageMarshalJSON_Streaming(t *testing.T) {
+	client := createTestClient(t)
+
+	stream, err := client.CreateChatCompletionStream(
+		context.Background(), openrouter.ChatCompletionRequest{
+			Model: "qwen/qwen3-235b-a22b:free",
+			Messages: []openrouter.ChatCompletionMessage{
+				{
+					Role:    "user",
+					Content: openrouter.Content{Text: "Help me think whether i should make coffee with sugar ?"},
+				},
+			},
+			Stream: true,
+		},
+	)
+	require.NoError(t, err)
+	defer stream.Close()
+
+	for {
+		response, err := stream.Recv()
+		if err != nil && err != io.EOF {
+			require.NoError(t, err)
+		}
+		if errors.Is(err, io.EOF) {
+			fmt.Println("EOF, stream finished")
+			return
+		}
+		b, err := json.MarshalIndent(response, "", "  ")
+		require.NoError(t, err)
+		fmt.Println(string(b))
 	}
 }
