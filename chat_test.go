@@ -71,3 +71,17 @@ func TestUnmarshalChatCompletionMessage(t *testing.T) {
 		t.Errorf("expected %s, got %s", "This is a simple content", message.Content.Text)
 	}
 }
+
+func TestChatCompletionMessagePromptCachingApplies(t *testing.T) {
+	message := openrouter.ChatCompletionMessage{
+		Role: openrouter.ChatMessageRoleUser,
+		Content: openrouter.Content{Multi: []openrouter.ChatMessagePart{
+			{Text: "This is a simple content", CacheControl: &openrouter.CacheControl{
+				Type: "ephemeral",
+			}},
+		},
+		}}
+
+	expected := `{"role":"user","content":[{"text":"This is a simple content","cache_control":{"type":"ephemeral"}}]}`
+	marshalAndValidate(t, message, expected)
+}

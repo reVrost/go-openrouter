@@ -99,6 +99,12 @@ type ChatCompletionRequest struct {
 	// Apply message transforms
 	// https://openrouter.ai/docs/features/message-transforms
 	Transforms []string `json:"transforms,omitempty"`
+
+	Usage *IncludeUsage `json:"usage,omitempty"`
+}
+
+type IncludeUsage struct {
+	Include bool `json:"include"`
 }
 
 type ChatProvider struct {

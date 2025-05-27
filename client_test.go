@@ -2,11 +2,14 @@ package openrouter_test
 
 import (
 	"context"
+	"encoding/json"
+	"fmt"
 	"os"
 	"strings"
 	"testing"
 
 	openrouter "github.com/revrost/go-openrouter"
+	"github.com/stretchr/testify/require"
 )
 
 // Test client setup
@@ -36,7 +39,7 @@ func TestCreateChatCompletion(t *testing.T) {
 		{
 			name: "basic completion",
 			request: openrouter.ChatCompletionRequest{
-				Model: openrouter.GeminiFlashExp,
+				Model: "qwen/qwq-32b:free",
 				Messages: []openrouter.ChatCompletionMessage{
 					{
 						Role:    openrouter.ChatMessageRoleUser,
@@ -91,6 +94,53 @@ func TestCreateChatCompletion(t *testing.T) {
 			}
 		})
 	}
+}
+
+func TestExplicitPromptCachingApplies(t *testing.T) {
+	t.Skip("Only run this test locally")
+	client := createTestClient(t)
+
+	message := openrouter.ChatCompletionMessage{
+		Role: openrouter.ChatMessageRoleSystem,
+		Content: openrouter.Content{
+			Multi: []openrouter.ChatMessagePart{
+				{
+					Type:         openrouter.ChatMessagePartTypeText,
+					Text:         testLongToken,
+					CacheControl: &openrouter.CacheControl{Type: "ephemeral"},
+				},
+			},
+		},
+	}
+	userMessage := openrouter.ChatCompletionMessage{
+		Role: openrouter.ChatMessageRoleUser,
+		Content: openrouter.Content{
+			Multi: []openrouter.ChatMessagePart{
+				{
+					Type:         openrouter.ChatMessagePartTypeText,
+					Text:         "Who was augustus based on the text?",
+					CacheControl: &openrouter.CacheControl{Type: "ephemeral"},
+				},
+			},
+		},
+	}
+	request := openrouter.ChatCompletionRequest{
+		Model: "google/gemini-2.5-flash-preview-05-20",
+		Messages: []openrouter.ChatCompletionMessage{
+			message,
+			userMessage,
+		},
+		Usage: &openrouter.IncludeUsage{
+			Include: true,
+		},
+	}
+	px, _ := json.MarshalIndent(request, "", "\t")
+	fmt.Printf("request :\n %s\n", string(px))
+	response, err := client.CreateChatCompletion(context.Background(), request)
+	b, _ := json.MarshalIndent(response, "", "\t")
+	fmt.Printf("response :\n %s\n", string(b))
+
+	require.NoError(t, err)
 }
 
 func TestAuthFailure(t *testing.T) {
