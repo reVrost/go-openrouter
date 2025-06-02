@@ -17,38 +17,7 @@ type APIError struct {
 }
 
 // Metadata provides additional information about the error.
-type Metadata struct {
-	// Common fields
-	ProviderName string `json:"provider_name,omitempty"`
-
-	// Provider-specific fields
-	Raw json.RawMessage `json:"raw,omitempty"` // Raw error from provider
-
-	// Moderation-specific fields
-	Reasons      []string `json:"reasons,omitempty"`       // Why input was flagged
-	FlaggedInput string   `json:"flagged_input,omitempty"` // Truncated flagged text
-	ModelSlug    string   `json:"model_slug,omitempty"`    // Model that flagged input
-}
-
-// ProviderError returns provider-specific error details
-func (m *Metadata) ProviderError() (string, json.RawMessage) {
-	return m.ProviderName, m.Raw
-}
-
-// ModerationError returns moderation-specific error details
-func (m *Metadata) ModerationError() (string, []string, string, string) {
-	return m.ProviderName, m.Reasons, m.FlaggedInput, m.ModelSlug
-}
-
-// IsProviderError checks if this is a provider error
-func (m *Metadata) IsProviderError() bool {
-	return m.Raw != nil
-}
-
-// IsModerationError checks if this is a moderation error
-func (m *Metadata) IsModerationError() bool {
-	return len(m.Reasons) > 0
-}
+type Metadata map[string]any
 
 // RequestError provides information about generic request errors.
 type RequestError struct {
@@ -65,8 +34,7 @@ type ErrorResponse struct {
 func (e *APIError) Error() string {
 	// If it has metadata
 	if e.Metadata != nil {
-		return fmt.Sprintf("error, code: %v, message: %s, reasons: %v, flagged_input: %s, provider_name: %s, model_slug: %s",
-			e.Code, e.Message, e.Metadata.Reasons, e.Metadata.FlaggedInput, e.Metadata.ProviderName, e.Metadata.ModelSlug)
+		return fmt.Sprintf("error, code: %v, message: %s, metadata: %v", e.Code, e.Message, e.Metadata)
 	}
 	return e.Message
 }
