@@ -64,6 +64,11 @@ func (d *Definition) Unmarshal(content string, v any) error {
 	return VerifySchemaAndUnmarshal(*d, []byte(content), v)
 }
 
+func GenerateSchema[T any]() (*Definition, error) {
+	var v T
+	return reflectSchema(reflect.TypeOf(v))
+}
+
 func GenerateSchemaForType(v any) (*Definition, error) {
 	return reflectSchema(reflect.TypeOf(v))
 }
