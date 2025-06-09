@@ -113,8 +113,23 @@ type ChatCompletionRequest struct {
 	// Apply message transforms
 	// https://openrouter.ai/docs/features/message-transforms
 	Transforms []string `json:"transforms,omitempty"`
+	// Optional web search options
+	// https://openrouter.ai/docs/features/web-search#specifying-search-context-size
+	WebSearchOptions WebSearchOptions `json:"web_search_options,omitempty"`
 
 	Usage *IncludeUsage `json:"usage,omitempty"`
+}
+
+type SearchContextSize string
+
+const (
+	SearchContextSizeLow    SearchContextSize = "low"
+	SearchContextSizeMedium SearchContextSize = "medium"
+	SearchContextSizeHigh   SearchContextSize = "high"
+)
+
+type WebSearchOptions struct {
+	SearchContextSize SearchContextSize `json:"search_context_size"`
 }
 
 type IncludeUsage struct {
@@ -135,6 +150,7 @@ type ChatCompletionResponse struct {
 	Created           int64                  `json:"created"`
 	Model             string                 `json:"model"`
 	Choices           []ChatCompletionChoice `json:"choices"`
+	Citations         []string               `json:"citations"`
 	Usage             Usage                  `json:"usage"`
 	SystemFingerprint string                 `json:"system_fingerprint"`
 
@@ -313,6 +329,24 @@ type Content struct {
 	Multi []ChatMessagePart
 }
 
+type Annotation struct {
+	Type        AnnotationType `json:"type"`
+	URLCitation URLCitation    `json:"url_citation"`
+}
+
+type AnnotationType string
+
+const (
+	AnnotationTypeUrlCitation AnnotationType = "url_citation"
+)
+
+type URLCitation struct {
+	StartIndex int    `json:"start_index"`
+	EndIndex   int    `json:"end_index"`
+	Title      string `json:"title"`
+	URL        string `json:"url"`
+}
+
 type CacheControl struct {
 	// Type only supports "ephemeral" for now.
 	Type string `json:"type"`
@@ -339,6 +373,9 @@ type ChatCompletionMessage struct {
 
 	// For Role=tool prompts this should be set to the ID given in the assistant's prior request to call a tool.
 	ToolCallID string `json:"tool_call_id,omitempty"`
+
+	// Web Search Annotations
+	Annotations []Annotation `json:"annotations"`
 }
 
 // MarshalJSON serializes ContentType as a string or array.
