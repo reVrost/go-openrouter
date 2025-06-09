@@ -375,7 +375,7 @@ type ChatCompletionMessage struct {
 	ToolCallID string `json:"tool_call_id,omitempty"`
 
 	// Web Search Annotations
-	Annotations []Annotation `json:"annotations"`
+	Annotations []Annotation `json:"annotations,omitempty"`
 }
 
 // MarshalJSON serializes ContentType as a string or array.
