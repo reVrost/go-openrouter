@@ -46,6 +46,8 @@ type Definition struct {
 	// additionalProperties: false
 	// additionalProperties: jsonschema.Definition{Type: jsonschema.String}
 	AdditionalProperties any `json:"additionalProperties,omitempty"`
+	// Whether the schema is nullable or not.
+	Nullable bool `json:"nullable,omitempty"`
 }
 
 func (d *Definition) MarshalJSON() ([]byte, error) {
@@ -117,16 +119,19 @@ func reflectSchemaObject(t reflect.Type) (*Definition, error) {
 	}
 	properties := make(map[string]Definition)
 	var requiredFields []string
-	for i := 0; i < t.NumField(); i++ {
+	for i := range t.NumField() {
 		field := t.Field(i)
 		if !field.IsExported() {
 			continue
 		}
 		jsonTag := field.Tag.Get("json")
 		var required = true
-		if jsonTag == "" {
+		switch {
+		case jsonTag == "-":
+			continue
+		case jsonTag == "":
 			jsonTag = field.Name
-		} else if strings.HasSuffix(jsonTag, ",omitempty") {
+		case strings.HasSuffix(jsonTag, ",omitempty"):
 			jsonTag = strings.TrimSuffix(jsonTag, ",omitempty")
 			required = false
 		}
@@ -139,6 +144,16 @@ func reflectSchemaObject(t reflect.Type) (*Definition, error) {
 		if description != "" {
 			item.Description = description
 		}
+		enum := field.Tag.Get("enum")
+		if enum != "" {
+			item.Enum = strings.Split(enum, ",")
+		}
+
+		if n := field.Tag.Get("nullable"); n != "" {
+			nullable, _ := strconv.ParseBool(n)
+			item.Nullable = nullable
+		}
+
 		properties[jsonTag] = *item
 
 		if s := field.Tag.Get("required"); s != "" {
