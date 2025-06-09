@@ -124,7 +124,10 @@ func reflectSchemaObject(t reflect.Type) (*Definition, error) {
 		if !field.IsExported() {
 			continue
 		}
-		jsonTag := field.Tag.Get("json")
+		jsonTag := field.Tag.Get("skipschema")
+		if jsonTag == "true" {
+			continue
+		}
 		var required = true
 		switch {
 		case jsonTag == "-":
