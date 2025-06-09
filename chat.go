@@ -54,7 +54,9 @@ type ChatCompletionReasoning struct {
 }
 
 type ChatCompletionRequest struct {
-	Model    string                  `json:"model"`
+	Model string `json:"model,omitempty"`
+	// Optional model fallbacks: https://openrouter.ai/docs/features/model-routing#the-models-parameter
+	Models   []string                `json:"models,omitempty"`
 	Provider *ChatProvider           `json:"provider,omitempty"`
 	Messages []ChatCompletionMessage `json:"messages"`
 
@@ -136,11 +138,39 @@ type IncludeUsage struct {
 	Include bool `json:"include"`
 }
 
+type DataCollection string
+
+const (
+	DataCollectionAllow DataCollection = "allow"
+	DataCollectionDeny  DataCollection = "deny"
+)
+
+type ProviderSorting string
+
+const (
+	ProviderSortingPrice      ProviderSorting = "price"
+	ProviderSortingThroughput ProviderSorting = "throughput"
+	ProviderSortingLatency    ProviderSorting = "latency"
+)
+
+// Provider Routing: https://openrouter.ai/docs/features/provider-routing
 type ChatProvider struct {
 	// The order of the providers in the list determines the order in which they are called.
 	Order []string `json:"order"`
 	// Allow fallbacks to other providers if the primary provider fails.
 	AllowFallbacks bool `json:"allow_fallbacks"`
+	// Only use providers that support all parameters in your request.
+	RequireParameters bool `json:"require_parameters"`
+	// Control whether to use providers that may store data.
+	DataCollection DataCollection `json:"data_collection"`
+	// List of provider slugs to allow for this request.
+	Only []string `json:"only"`
+	// List of provider slugs to skip for this request.
+	Ignore []string `json:"ignore"`
+	// List of quantization levels to filter by (e.g. ["int4", "int8"]).
+	Quantizations []string `json:"quantizations"`
+	// Sort providers by price or throughput. (e.g. "price" or "throughput").
+	Sort ProviderSorting `json:"sort"`
 }
 
 // ChatCompletionResponse represents a response structure for chat completion API.
