@@ -53,6 +53,35 @@ type ChatCompletionReasoning struct {
 	Exclude *bool `json:"exclude,omitempty"`
 }
 
+type PluginID string
+
+const (
+	// Processing PDFs: https://openrouter.ai/docs/features/images-and-pdfs#processing-pdfs
+	PluginIDFileParser PluginID = "file-parser"
+	// Web search plugin: https://openrouter.ai/docs/features/web-search
+	PluginIDWeb PluginID = "web"
+)
+
+type PDFEngine string
+
+const (
+	// Best for scanned documents or PDFs with images ($2 per 1,000 pages).
+	PDFEngineMistralOCR PDFEngine = "mistral-ocr"
+	// Best for well-structured PDFs with clear text content (Free).
+	PDFEnginePDFText PDFEngine = "pdf-text"
+	// Only available for models that support file input natively (charged as input tokens).
+	PDFEngineNative PDFEngine = "native"
+)
+
+type ChatCompletionPlugin struct {
+	ID  PluginID  `json:"id"`
+	PDF PDFPlugin `json:"pdf,omitempty"`
+}
+
+type PDFPlugin struct {
+	Engine string `json:"engine"`
+}
+
 type ChatCompletionRequest struct {
 	Model string `json:"model,omitempty"`
 	// Optional model fallbacks: https://openrouter.ai/docs/features/model-routing#the-models-parameter
@@ -61,6 +90,8 @@ type ChatCompletionRequest struct {
 	Messages []ChatCompletionMessage `json:"messages"`
 
 	Reasoning *ChatCompletionReasoning `json:"reasoning,omitempty"`
+
+	Plugins []ChatCompletionPlugin `json:"plugins,omitempty"`
 
 	// MaxTokens The maximum number of tokens that can be generated in the chat completion.
 	// This value can be used to control costs for text generated via API.
