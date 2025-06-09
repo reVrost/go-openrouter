@@ -376,6 +376,25 @@ func TestStructToSchema(t *testing.T) {
 				"additionalProperties":false
 			}`,
 		},
+		{
+			name: "Test with skipschema tag",
+			in: struct {
+				Name         string         `json:"name,omitempty"`
+				ForbiddenMap map[string]any `json:"forbidden_map,omitempty" skipschema:"true"`
+			}{
+				Name:         "",
+				ForbiddenMap: map[string]any{},
+			},
+			want: `{
+				"type":"object",
+				"properties":{
+					"name":{
+						"type":"string"
+					}
+				},
+				"additionalProperties":false
+			}`,
+		},
 	}
 
 	for _, tt := range tests {
