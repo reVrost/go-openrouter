@@ -53,12 +53,45 @@ type ChatCompletionReasoning struct {
 	Exclude *bool `json:"exclude,omitempty"`
 }
 
+type PluginID string
+
+const (
+	// Processing PDFs: https://openrouter.ai/docs/features/images-and-pdfs#processing-pdfs
+	PluginIDFileParser PluginID = "file-parser"
+	// Web search plugin: https://openrouter.ai/docs/features/web-search
+	PluginIDWeb PluginID = "web"
+)
+
+type PDFEngine string
+
+const (
+	// Best for scanned documents or PDFs with images ($2 per 1,000 pages).
+	PDFEngineMistralOCR PDFEngine = "mistral-ocr"
+	// Best for well-structured PDFs with clear text content (Free).
+	PDFEnginePDFText PDFEngine = "pdf-text"
+	// Only available for models that support file input natively (charged as input tokens).
+	PDFEngineNative PDFEngine = "native"
+)
+
+type ChatCompletionPlugin struct {
+	ID  PluginID  `json:"id"`
+	PDF PDFPlugin `json:"pdf,omitempty"`
+}
+
+type PDFPlugin struct {
+	Engine string `json:"engine"`
+}
+
 type ChatCompletionRequest struct {
-	Model    string                  `json:"model"`
+	Model string `json:"model,omitempty"`
+	// Optional model fallbacks: https://openrouter.ai/docs/features/model-routing#the-models-parameter
+	Models   []string                `json:"models,omitempty"`
 	Provider *ChatProvider           `json:"provider,omitempty"`
 	Messages []ChatCompletionMessage `json:"messages"`
 
 	Reasoning *ChatCompletionReasoning `json:"reasoning,omitempty"`
+
+	Plugins []ChatCompletionPlugin `json:"plugins,omitempty"`
 
 	// MaxTokens The maximum number of tokens that can be generated in the chat completion.
 	// This value can be used to control costs for text generated via API.
@@ -136,11 +169,39 @@ type IncludeUsage struct {
 	Include bool `json:"include"`
 }
 
+type DataCollection string
+
+const (
+	DataCollectionAllow DataCollection = "allow"
+	DataCollectionDeny  DataCollection = "deny"
+)
+
+type ProviderSorting string
+
+const (
+	ProviderSortingPrice      ProviderSorting = "price"
+	ProviderSortingThroughput ProviderSorting = "throughput"
+	ProviderSortingLatency    ProviderSorting = "latency"
+)
+
+// Provider Routing: https://openrouter.ai/docs/features/provider-routing
 type ChatProvider struct {
 	// The order of the providers in the list determines the order in which they are called.
 	Order []string `json:"order"`
 	// Allow fallbacks to other providers if the primary provider fails.
 	AllowFallbacks bool `json:"allow_fallbacks"`
+	// Only use providers that support all parameters in your request.
+	RequireParameters bool `json:"require_parameters"`
+	// Control whether to use providers that may store data.
+	DataCollection DataCollection `json:"data_collection"`
+	// List of provider slugs to allow for this request.
+	Only []string `json:"only"`
+	// List of provider slugs to skip for this request.
+	Ignore []string `json:"ignore"`
+	// List of quantization levels to filter by (e.g. ["int4", "int8"]).
+	Quantizations []string `json:"quantizations"`
+	// Sort providers by price or throughput. (e.g. "price" or "throughput").
+	Sort ProviderSorting `json:"sort"`
 }
 
 // ChatCompletionResponse represents a response structure for chat completion API.
