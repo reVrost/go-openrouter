@@ -359,6 +359,7 @@ type ChatMessagePartType string
 const (
 	ChatMessagePartTypeText     ChatMessagePartType = "text"
 	ChatMessagePartTypeImageURL ChatMessagePartType = "image_url"
+	ChatMessagePartTypeFile     ChatMessagePartType = "file"
 )
 
 type ChatMessagePart struct {
@@ -369,6 +370,7 @@ type ChatMessagePart struct {
 	CacheControl *CacheControl `json:"cache_control,omitempty"`
 
 	ImageURL *ChatMessageImageURL `json:"image_url,omitempty"`
+	File     *FileContent         `json:"file,omitempty"`
 }
 
 type ImageURLDetail string
@@ -382,6 +384,12 @@ const (
 type ChatMessageImageURL struct {
 	URL    string         `json:"url,omitempty"`
 	Detail ImageURLDetail `json:"detail,omitempty"`
+}
+
+// FileContent represents file content for PDF processing
+type FileContent struct {
+	Filename string `json:"filename"`
+	FileData string `json:"file_data"`
 }
 
 // Content handles both string and multi-part content.

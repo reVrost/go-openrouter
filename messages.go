@@ -40,3 +40,46 @@ func ToolMessage(callID string, content string) ChatCompletionMessage {
 		ToolCallID: callID,
 	}
 }
+
+// UserMessageWithPDF creates a new user message with text and PDF file content.
+func UserMessageWithPDF(text, filename, fileData string) ChatCompletionMessage {
+	return ChatCompletionMessage{
+		Role: ChatMessageRoleUser,
+		Content: Content{
+			Multi: []ChatMessagePart{
+				{
+					Type: ChatMessagePartTypeText,
+					Text: text,
+				},
+				{
+					Type: ChatMessagePartTypeFile,
+					File: &FileContent{
+						Filename: filename,
+						FileData: fileData,
+					},
+				},
+			},
+		},
+	}
+}
+
+// UserMessageWithImage creates a new user message with text and image URL.
+func UserMessageWithImage(text, imageURL string) ChatCompletionMessage {
+	return ChatCompletionMessage{
+		Role: ChatMessageRoleUser,
+		Content: Content{
+			Multi: []ChatMessagePart{
+				{
+					Type: ChatMessagePartTypeText,
+					Text: text,
+				},
+				{
+					Type: ChatMessagePartTypeImageURL,
+					ImageURL: &ChatMessageImageURL{
+						URL: imageURL,
+					},
+				},
+			},
+		},
+	}
+}
