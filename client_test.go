@@ -143,6 +143,29 @@ func TestExplicitPromptCachingApplies(t *testing.T) {
 	require.NoError(t, err)
 }
 
+func TestUsageAccounting(t *testing.T) {
+	client := createTestClient(t)
+	request := openrouter.ChatCompletionRequest{
+		Model: "qwen/qwq-32b:free",
+		Messages: []openrouter.ChatCompletionMessage{
+			openrouter.SystemMessage("You are a helpful assistant."),
+			openrouter.UserMessage("How are you?"),
+		},
+		Usage: &openrouter.IncludeUsage{
+			Include: true,
+		},
+	}
+
+	response, err := client.CreateChatCompletion(context.Background(), request)
+	require.NoError(t, err)
+
+	usage := response.Usage
+	require.NotNil(t, usage)
+	require.NotNil(t, usage.PromptTokens)
+	require.NotNil(t, usage.CompletionTokens)
+	require.NotNil(t, usage.TotalTokens)
+}
+
 func TestAuthFailure(t *testing.T) {
 	// Test with invalid token
 	client := openrouter.NewClient("invalid-token")

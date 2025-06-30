@@ -212,7 +212,7 @@ type ChatCompletionResponse struct {
 	Model             string                 `json:"model"`
 	Choices           []ChatCompletionChoice `json:"choices"`
 	Citations         []string               `json:"citations"`
-	Usage             Usage                  `json:"usage"`
+	Usage             *Usage                 `json:"usage,omitempty"`
 	SystemFingerprint string                 `json:"system_fingerprint"`
 
 	// http.Header
