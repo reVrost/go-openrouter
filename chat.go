@@ -10,6 +10,7 @@ import (
 	"net/http"
 	"strings"
 
+	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
 )
 
@@ -95,11 +96,10 @@ type ChatCompletionRequest struct {
 
 	// MaxTokens The maximum number of tokens that can be generated in the chat completion.
 	// This value can be used to control costs for text generated via API.
-	// This value is now deprecated in favor of max_completion_tokens, and is not compatible with o1 series models.
-	// refs: https://platform.openai.com/docs/api-reference/chat/create#chat-create-max_tokens
 	MaxTokens int `json:"max_tokens,omitempty"`
-	// MaxCompletionTokens An upper bound for the number of tokens that can be generated for a completion,
-	// including visible output tokens and reasoning tokens https://platform.openai.com/docs/guides/reasoning
+	// MaxCompletionTokens Upper bound for completion tokens, supported for OpenAI API compliance.
+	// Prefer "max_tokens" for limiting output in new integrations.
+	// refs: https://platform.openai.com/docs/api-reference/chat/create#chat-create-max_completion_tokens
 	MaxCompletionTokens int                           `json:"max_completion_tokens,omitempty"`
 	Temperature         float32                       `json:"temperature,omitempty"`
 	TopP                float32                       `json:"top_p,omitempty"`
@@ -148,7 +148,7 @@ type ChatCompletionRequest struct {
 	Transforms []string `json:"transforms,omitempty"`
 	// Optional web search options
 	// https://openrouter.ai/docs/features/web-search#specifying-search-context-size
-	WebSearchOptions WebSearchOptions `json:"web_search_options,omitempty"`
+	WebSearchOptions *WebSearchOptions `json:"web_search_options,omitempty"`
 
 	Usage *IncludeUsage `json:"usage,omitempty"`
 }
@@ -714,4 +714,14 @@ func (s *ChatCompletionStream) Close() {
 // String is a helper function returns a pointer to the string value passed in.
 func String(s string) *string {
 	return &s
+}
+
+// SetLogLevel sets the minimum log level for the internally used logger.
+func SetLogLevel(level zerolog.Level) {
+	zerolog.SetGlobalLevel(level)
+}
+
+// DisableLogs disables the internally used logger.
+func DisableLogs() {
+	zerolog.SetGlobalLevel(zerolog.Disabled)
 }
