@@ -39,7 +39,7 @@ func TestCreateChatCompletion(t *testing.T) {
 		{
 			name: "basic completion",
 			request: openrouter.ChatCompletionRequest{
-				Model: "qwen/qwq-32b:free",
+				Model: "qwen/qwen3-235b-a22b-07-25:free",
 				Messages: []openrouter.ChatCompletionMessage{
 					{
 						Role:    openrouter.ChatMessageRoleUser,
@@ -146,7 +146,7 @@ func TestExplicitPromptCachingApplies(t *testing.T) {
 func TestUsageAccounting(t *testing.T) {
 	client := createTestClient(t)
 	request := openrouter.ChatCompletionRequest{
-		Model: "qwen/qwq-32b:free",
+		Model: "qwen/qwen3-235b-a22b-07-25:free",
 		Messages: []openrouter.ChatCompletionMessage{
 			openrouter.SystemMessage("You are a helpful assistant."),
 			openrouter.UserMessage("How are you?"),

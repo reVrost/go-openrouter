@@ -75,8 +75,8 @@ const (
 )
 
 type ChatCompletionPlugin struct {
-	ID  PluginID  `json:"id"`
-	PDF PDFPlugin `json:"pdf,omitempty"`
+	ID  PluginID   `json:"id"`
+	PDF *PDFPlugin `json:"pdf,omitempty"`
 }
 
 type PDFPlugin struct {
@@ -413,6 +413,7 @@ type URLCitation struct {
 	StartIndex int    `json:"start_index"`
 	EndIndex   int    `json:"end_index"`
 	Title      string `json:"title"`
+	Content    string `json:"content"`
 	URL        string `json:"url"`
 }
 

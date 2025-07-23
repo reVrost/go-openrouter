@@ -87,7 +87,7 @@ func main() {
 
 	stream, err := client.CreateChatCompletionStream(
 		context.Background(), openrouter.ChatCompletionRequest{
-			Model: "qwen/qwq-32b:free",
+			Model: "qwen/qwen3-235b-a22b-07-25:free",
 			Messages: []openrouter.ChatCompletionMessage{
 				{
 					Role:    "user",

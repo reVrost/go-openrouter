@@ -11,7 +11,7 @@ import (
 func CreatePDFPlugin(engine PDFEngine) ChatCompletionPlugin {
 	return ChatCompletionPlugin{
 		ID: PluginIDFileParser,
-		PDF: PDFPlugin{
+		PDF: &PDFPlugin{
 			Engine: string(engine),
 		},
 	}
