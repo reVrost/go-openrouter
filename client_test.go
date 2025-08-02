@@ -181,3 +181,13 @@ func TestAuthFailure(t *testing.T) {
 		t.Error("Expected authentication error, got nil")
 	}
 }
+
+func TestListModels(t *testing.T) {
+	client := createTestClient(t)
+
+	models, err := client.ListModels(context.Background())
+	require.NoError(t, err)
+
+	require.NotEmpty(t, models)
+	require.NotEmpty(t, models[0].ID)
+}
