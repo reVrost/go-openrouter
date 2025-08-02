@@ -187,21 +187,21 @@ const (
 // Provider Routing: https://openrouter.ai/docs/features/provider-routing
 type ChatProvider struct {
 	// The order of the providers in the list determines the order in which they are called.
-	Order []string `json:"order"`
+	Order []string `json:"order,omitempty"`
 	// Allow fallbacks to other providers if the primary provider fails.
-	AllowFallbacks bool `json:"allow_fallbacks"`
+	AllowFallbacks bool `json:"allow_fallbacks,omitempty"`
 	// Only use providers that support all parameters in your request.
-	RequireParameters bool `json:"require_parameters"`
+	RequireParameters bool `json:"require_parameters,omitempty"`
 	// Control whether to use providers that may store data.
-	DataCollection DataCollection `json:"data_collection"`
+	DataCollection DataCollection `json:"data_collection,omitempty"`
 	// List of provider slugs to allow for this request.
-	Only []string `json:"only"`
+	Only []string `json:"only,omitempty"`
 	// List of provider slugs to skip for this request.
-	Ignore []string `json:"ignore"`
+	Ignore []string `json:"ignore,omitempty"`
 	// List of quantization levels to filter by (e.g. ["int4", "int8"]).
-	Quantizations []string `json:"quantizations"`
+	Quantizations []string `json:"quantizations,omitempty"`
 	// Sort providers by price or throughput. (e.g. "price" or "throughput").
-	Sort ProviderSorting `json:"sort"`
+	Sort ProviderSorting `json:"sort,omitempty"`
 }
 
 // ChatCompletionResponse represents a response structure for chat completion API.
