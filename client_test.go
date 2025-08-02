@@ -191,3 +191,13 @@ func TestListModels(t *testing.T) {
 	require.NotEmpty(t, models)
 	require.NotEmpty(t, models[0].ID)
 }
+
+func TestListUserModels(t *testing.T) {
+	client := createTestClient(t)
+
+	models, err := client.ListUserModels(context.Background())
+	require.NoError(t, err)
+
+	require.NotEmpty(t, models)
+	require.NotEmpty(t, models[0].ID)
+}

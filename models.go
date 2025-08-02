@@ -5,7 +5,10 @@ import (
 	"net/http"
 )
 
-const listModelsSuffix = "/models"
+const (
+	listModelsSuffix     = "/models"
+	listUserModelsSuffix = "/models/user"
+)
 
 type ModelArchitecture struct {
 	InputModalities  []string `json:"input_modalities"`
@@ -51,6 +54,26 @@ func (c *Client) ListModels(ctx context.Context) (models []Model, err error) {
 		ctx,
 		http.MethodGet,
 		c.fullURL(listModelsSuffix),
+	)
+	if err != nil {
+		return
+	}
+
+	var response struct {
+		Data []Model `json:"data"`
+	}
+
+	err = c.sendRequest(req, &response)
+
+	models = response.Data
+	return
+}
+
+func (c *Client) ListUserModels(ctx context.Context) (models []Model, err error) {
+	req, err := c.newRequest(
+		ctx,
+		http.MethodGet,
+		c.fullURL(listUserModelsSuffix),
 	)
 	if err != nil {
 		return
