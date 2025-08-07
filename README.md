@@ -22,7 +22,7 @@ go get github.com/revrost/go-openrouter
 
 ## Usage
 
-### Deepseek V3 example usage:
+### Chat completion usage:
 
 ```go
 package main
@@ -42,7 +42,7 @@ func main() {
 	resp, err := client.CreateChatCompletion(
 		context.Background(),
 		openrouter.ChatCompletionRequest{
-			Model: openrouter.DeepseekV3,
+			Model: "deepseek/deepseek-chat-v3-0324:free",
 			Messages: []openrouter.ChatCompletionMessage{
 				{
 					Role:    openrouter.ChatMessageRoleUser,
