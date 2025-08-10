@@ -182,6 +182,37 @@ func TestAuthFailure(t *testing.T) {
 	}
 }
 
+func TestProviderError(t *testing.T) {
+	client := createTestClient(t)
+
+	ctx := context.Background()
+	_, err := client.CreateChatCompletion(ctx, openrouter.ChatCompletionRequest{
+		Model: "openai/gpt-5-nano",
+		Messages: []openrouter.ChatCompletionMessage{
+			{
+				Role:    openrouter.ChatMessageRoleUser,
+				Content: openrouter.Content{Text: "This will always fail with a provider error, because openai requires the message to contain the word j-s-o-n."},
+			},
+		},
+		ResponseFormat: &openrouter.ChatCompletionResponseFormat{
+			Type: openrouter.ChatCompletionResponseFormatTypeJSONObject,
+		},
+	})
+
+	if err == nil {
+		t.Error("Expected api error, got nil")
+	}
+
+	apiErr, ok := err.(*openrouter.APIError)
+	if !ok {
+		t.Errorf("Expected api error, got %T", err)
+	}
+
+	if msg := apiErr.Error(); msg != "provider error, code: 400, message: Response input messages must contain the word 'json' in some form to use 'text.format' of type 'json_object'." {
+		t.Errorf("Expected provider error, got %v", msg)
+	}
+}
+
 func TestListModels(t *testing.T) {
 	client := createTestClient(t)
 

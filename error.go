@@ -13,11 +13,15 @@ type APIError struct {
 	Metadata *Metadata `json:"metadata,omitempty"`
 
 	// Internal fields
-	HTTPStatusCode int `json:"-"`
+	HTTPStatusCode int            `json:"-"`
+	ProviderError  *ProviderError `json:"-"`
 }
 
 // Metadata provides additional information about the error.
 type Metadata map[string]any
+
+// ProviderError provides the provider error (if available).
+type ProviderError map[string]any
 
 // RequestError provides information about generic request errors.
 type RequestError struct {
@@ -31,11 +35,47 @@ type ErrorResponse struct {
 	Error *APIError `json:"error,omitempty"`
 }
 
+func (e *ProviderError) Message() any {
+	// {"message": "string"}
+	messageAny, ok := (*e)["message"]
+	if ok {
+		return messageAny
+	}
+
+	// {"error": {"message": "string"}}
+	errAny, ok := (*e)["error"]
+	if !ok {
+		return nil
+	}
+
+	err, ok := errAny.(map[string]any)
+	if !ok {
+		return errAny
+	}
+
+	messageAny, ok = err["message"]
+	if ok {
+		return messageAny
+	}
+
+	return err
+}
+
 func (e *APIError) Error() string {
+	// If it has a provider error
+	if e.ProviderError != nil {
+		if message := e.ProviderError.Message(); message != nil {
+			return fmt.Sprintf("provider error, code: %v, message: %v", e.Code, message)
+		}
+
+		return fmt.Sprintf("provider error, code: %v, message: %s, error: %v", e.Code, e.Message, *e.ProviderError)
+	}
+
 	// If it has metadata
 	if e.Metadata != nil {
-		return fmt.Sprintf("error, code: %v, message: %s, metadata: %v", e.Code, e.Message, e.Metadata)
+		return fmt.Sprintf("error, code: %v, message: %s, metadata: %v", e.Code, e.Message, *e.Metadata)
 	}
+
 	return e.Message
 }
 
@@ -54,6 +94,23 @@ func (e *APIError) UnmarshalJSON(data []byte) (err error) {
 			return
 		}
 		e.Message = strings.Join(messages, ", ")
+	}
+
+	if meta, ok := rawMap["metadata"]; ok {
+		err = json.Unmarshal(meta, &e.Metadata)
+		if err != nil {
+			return
+		}
+	}
+
+	if e.Metadata != nil {
+		raw, ok := (*e.Metadata)["raw"].(string)
+		if ok {
+			err = json.Unmarshal([]byte(raw), &e.ProviderError)
+			if err != nil {
+				return
+			}
+		}
 	}
 
 	if _, ok := rawMap["code"]; !ok {
