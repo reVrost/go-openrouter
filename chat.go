@@ -645,6 +645,7 @@ type ChatCompletionStreamChoiceDelta struct {
 	FunctionCall *FunctionCall `json:"function_call,omitempty"`
 	ToolCalls    []ToolCall    `json:"tool_calls,omitempty"`
 	Refusal      string        `json:"refusal,omitempty"`
+	Annotations  []Annotation  `json:"annotations,omitempty"`
 	Reasoning    *string       `json:"reasoning,omitempty"`
 
 	// This property is used for the "reasoning" feature supported by deepseek-reasoner
