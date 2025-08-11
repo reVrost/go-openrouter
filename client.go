@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"net/url"
 )
 
 type Client struct {
@@ -86,8 +87,32 @@ func decodeString(body io.Reader, output *string) error {
 	return nil
 }
 
+type fullUrlOptions struct {
+	query url.Values
+}
+
+type fullUrlOption func(*fullUrlOptions)
+
+func withQuery(query url.Values) fullUrlOption {
+	return func(args *fullUrlOptions) {
+		args.query = query
+	}
+}
+
 // fullURL returns full URL for request.
-func (c *Client) fullURL(suffix string) string {
+func (c *Client) fullURL(suffix string, setters ...fullUrlOption) string {
+	// Default Options
+	args := &fullUrlOptions{
+		query: nil,
+	}
+	for _, setter := range setters {
+		setter(args)
+	}
+
+	if args.query != nil {
+		suffix = fmt.Sprintf("%s?%s", suffix, args.query.Encode())
+	}
+
 	return fmt.Sprintf("%s%s", c.config.BaseURL, suffix)
 }
 

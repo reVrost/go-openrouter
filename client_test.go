@@ -7,6 +7,7 @@ import (
 	"os"
 	"strings"
 	"testing"
+	"time"
 
 	openrouter "github.com/revrost/go-openrouter"
 	"github.com/stretchr/testify/require"
@@ -211,6 +212,34 @@ func TestProviderError(t *testing.T) {
 	if msg := apiErr.Error(); msg != "provider error, code: 400, message: Response input messages must contain the word 'json' in some form to use 'text.format' of type 'json_object'." {
 		t.Errorf("Expected provider error, got %v", msg)
 	}
+}
+
+func TestGetGeneration(t *testing.T) {
+	client := createTestClient(t)
+
+	ctx := context.Background()
+
+	request := openrouter.ChatCompletionRequest{
+		Model: "openai/gpt-oss-20b:free",
+		Messages: []openrouter.ChatCompletionMessage{
+			openrouter.SystemMessage("You are a helpful assistant."),
+			openrouter.UserMessage("How are you?"),
+		},
+		Provider: &openrouter.ChatProvider{
+			Only: []string{"atlas-cloud/fp8"},
+		},
+	}
+
+	response, err := client.CreateChatCompletion(ctx, request)
+	require.NoError(t, err)
+
+	// openrouter takes a second to store it (removing this causes it to fail)
+	time.Sleep(1 * time.Second)
+
+	generation, err := client.GetGeneration(ctx, response.ID)
+	require.NoError(t, err)
+
+	require.Equal(t, generation.ID, response.ID)
 }
 
 func TestListModels(t *testing.T) {
