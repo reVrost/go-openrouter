@@ -53,7 +53,7 @@ func (c *Client) ListModels(ctx context.Context) (models []Model, err error) {
 	req, err := c.newRequest(
 		ctx,
 		http.MethodGet,
-		c.fullURL(listModelsSuffix),
+		c.fullURL(listModelsSuffix, nil),
 	)
 	if err != nil {
 		return
@@ -73,7 +73,7 @@ func (c *Client) ListUserModels(ctx context.Context) (models []Model, err error)
 	req, err := c.newRequest(
 		ctx,
 		http.MethodGet,
-		c.fullURL(listUserModelsSuffix),
+		c.fullURL(listUserModelsSuffix, nil),
 	)
 	if err != nil {
 		return

@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"net/url"
 )
 
 type Client struct {
@@ -87,7 +88,11 @@ func decodeString(body io.Reader, output *string) error {
 }
 
 // fullURL returns full URL for request.
-func (c *Client) fullURL(suffix string) string {
+func (c *Client) fullURL(suffix string, query url.Values) string {
+	if query != nil {
+		suffix = fmt.Sprintf("%s?%s", suffix, query.Encode())
+	}
+
 	return fmt.Sprintf("%s%s", c.config.BaseURL, suffix)
 }
 
@@ -132,7 +137,7 @@ func (c *Client) newStreamRequest(
 	method string,
 	urlSuffix string,
 	body any) (*http.Request, error) {
-	req, err := c.requestBuilder.Build(ctx, method, c.fullURL(urlSuffix), body, http.Header{
+	req, err := c.requestBuilder.Build(ctx, method, c.fullURL(urlSuffix, nil), body, http.Header{
 		"Content-Type":  []string{"application/json"},
 		"Accept":        []string{"text/event-stream"},
 		"Cache-Control": []string{"no-cache"},
