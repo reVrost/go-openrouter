@@ -87,10 +87,30 @@ func decodeString(body io.Reader, output *string) error {
 	return nil
 }
 
+type fullUrlOptions struct {
+	query url.Values
+}
+
+type fullUrlOption func(*fullUrlOptions)
+
+func withQuery(query url.Values) fullUrlOption {
+	return func(args *fullUrlOptions) {
+		args.query = query
+	}
+}
+
 // fullURL returns full URL for request.
-func (c *Client) fullURL(suffix string, query url.Values) string {
-	if query != nil {
-		suffix = fmt.Sprintf("%s?%s", suffix, query.Encode())
+func (c *Client) fullURL(suffix string, setters ...fullUrlOption) string {
+	// Default Options
+	args := &fullUrlOptions{
+		query: nil,
+	}
+	for _, setter := range setters {
+		setter(args)
+	}
+
+	if args.query != nil {
+		suffix = fmt.Sprintf("%s?%s", suffix, args.query.Encode())
 	}
 
 	return fmt.Sprintf("%s%s", c.config.BaseURL, suffix)
@@ -137,7 +157,7 @@ func (c *Client) newStreamRequest(
 	method string,
 	urlSuffix string,
 	body any) (*http.Request, error) {
-	req, err := c.requestBuilder.Build(ctx, method, c.fullURL(urlSuffix, nil), body, http.Header{
+	req, err := c.requestBuilder.Build(ctx, method, c.fullURL(urlSuffix), body, http.Header{
 		"Content-Type":  []string{"application/json"},
 		"Accept":        []string{"text/event-stream"},
 		"Cache-Control": []string{"no-cache"},

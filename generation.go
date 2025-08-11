@@ -48,7 +48,7 @@ func (c *Client) GetGeneration(ctx context.Context, id string) (generation Gener
 	req, err := c.newRequest(
 		ctx,
 		http.MethodGet,
-		c.fullURL(getGenerationSuffix, query),
+		c.fullURL(getGenerationSuffix, withQuery(query)),
 	)
 	if err != nil {
 		return

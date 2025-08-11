@@ -527,7 +527,7 @@ func (c *Client) CreateChatCompletion(
 	req, err := c.newRequest(
 		ctx,
 		http.MethodPost,
-		c.fullURL(chatCompletionsSuffix, nil),
+		c.fullURL(chatCompletionsSuffix),
 		withBody(request),
 	)
 	if err != nil {
@@ -560,7 +560,7 @@ func (c *Client) CreateChatCompletionStream(
 	req, err := c.newRequest(
 		ctx,
 		http.MethodPost,
-		c.fullURL(chatCompletionsSuffix, nil),
+		c.fullURL(chatCompletionsSuffix),
 		withBody(request),
 	)
 	if err != nil {
