@@ -52,6 +52,10 @@ type ChatCompletionReasoning struct {
 
 	// Exclude defaults to false.
 	Exclude *bool `json:"exclude,omitempty"`
+
+	// Or enable reasoning with the default parameters:
+	// Default: inferred from `effort` or `max_tokens`
+	Enabled *bool `json:"enabled,omitempty"`
 }
 
 type PluginID string
