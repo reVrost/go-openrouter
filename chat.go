@@ -361,9 +361,10 @@ type FunctionDefinition struct {
 type ChatMessagePartType string
 
 const (
-	ChatMessagePartTypeText     ChatMessagePartType = "text"
-	ChatMessagePartTypeImageURL ChatMessagePartType = "image_url"
-	ChatMessagePartTypeFile     ChatMessagePartType = "file"
+	ChatMessagePartTypeText       ChatMessagePartType = "text"
+	ChatMessagePartTypeImageURL   ChatMessagePartType = "image_url"
+	ChatMessagePartTypeFile       ChatMessagePartType = "file"
+	ChatMessagePartTypeInputAudio ChatMessagePartType = "input_audio"
 )
 
 type ChatMessagePart struct {
@@ -373,8 +374,9 @@ type ChatMessagePart struct {
 	// https://openrouter.ai/docs/features/prompt-caching
 	CacheControl *CacheControl `json:"cache_control,omitempty"`
 
-	ImageURL *ChatMessageImageURL `json:"image_url,omitempty"`
-	File     *FileContent         `json:"file,omitempty"`
+	ImageURL   *ChatMessageImageURL   `json:"image_url,omitempty"`
+	InputAudio *ChatMessageInputAudio `json:"input_audio,omitempty"`
+	File       *FileContent           `json:"file,omitempty"`
 }
 
 type ImageURLDetail string
@@ -388,6 +390,18 @@ const (
 type ChatMessageImageURL struct {
 	URL    string         `json:"url,omitempty"`
 	Detail ImageURLDetail `json:"detail,omitempty"`
+}
+
+type AudioFormat string
+
+const (
+	AudioFormatMp3 AudioFormat = AudioFormat("mp3")
+	AudioFormatWav AudioFormat = AudioFormat("wav")
+)
+
+type ChatMessageInputAudio struct {
+	Data   string      `json:"data,omitempty"`
+	Format AudioFormat `json:"format,omitempty"`
 }
 
 // FileContent represents file content for PDF processing
