@@ -87,6 +87,13 @@ type PDFPlugin struct {
 	Engine string `json:"engine"`
 }
 
+type ChatCompletionModality string
+
+const (
+	ModalityText  ChatCompletionModality = "text"
+	ModalityImage ChatCompletionModality = "image"
+)
+
 type ChatCompletionRequest struct {
 	Model string `json:"model,omitempty"`
 	// Optional model fallbacks: https://openrouter.ai/docs/features/model-routing#the-models-parameter
@@ -96,7 +103,8 @@ type ChatCompletionRequest struct {
 
 	Reasoning *ChatCompletionReasoning `json:"reasoning,omitempty"`
 
-	Plugins []ChatCompletionPlugin `json:"plugins,omitempty"`
+	Plugins    []ChatCompletionPlugin   `json:"plugins,omitempty"`
+	Modalities []ChatCompletionModality `json:"modalities,omitempty"`
 
 	// MaxTokens The maximum number of tokens that can be generated in the chat completion.
 	// This value can be used to control costs for text generated via API.
