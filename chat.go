@@ -39,7 +39,7 @@ const chatCompletionsSuffix = "/chat/completions"
 
 var (
 	ErrChatCompletionInvalidModel       = errors.New("this model is not supported with this method, please use CreateCompletion client method instead") //nolint:lll
-	ErrChatCompletionStreamNotSupported = errors.New("streaming is not supported with this method, please use CreateChatCompletionStream")              //nolint:lll
+	ErrChatCompletionStreamNotSupported = errors.New("streaming is not supported with this method, please use CreateChatCompletion")                    //nolint:lll
 	ErrContentFieldsMisused             = errors.New("can't use both Content and MultiContent properties simultaneously")
 )
 

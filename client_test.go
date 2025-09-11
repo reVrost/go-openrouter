@@ -97,6 +97,66 @@ func TestCreateChatCompletion(t *testing.T) {
 	}
 }
 
+func TestCreateCompletion(t *testing.T) {
+	client := createTestClient(t)
+
+	tests := []struct {
+		name     string
+		request  openrouter.CompletionRequest
+		wantErr  bool
+		validate func(*testing.T, openrouter.CompletionResponse)
+	}{
+		{
+			name: "basic completion",
+			request: openrouter.CompletionRequest{
+				Model:  "nousresearch/hermes-4-70b",
+				Prompt: "Hello! Respond with just 'world'",
+			},
+			validate: func(t *testing.T, resp openrouter.CompletionResponse) {
+				if len(resp.Choices) == 0 {
+					t.Error("Expected at least one choice in response")
+				}
+				if !strings.Contains(resp.Choices[0].Text, "world") {
+					t.Errorf("Unexpected response: '%s' expected 'world'", resp.Choices[0].Text)
+				}
+			},
+		},
+		{
+			name: "invalid model",
+			request: openrouter.CompletionRequest{
+				Model:  "invalid-model",
+				Prompt: "Hello",
+			},
+			wantErr: true,
+		},
+		{
+			name: "streaming not supported",
+			request: openrouter.CompletionRequest{
+				Model:  openrouter.LiquidLFM7B,
+				Stream: true,
+				Prompt: "Hello",
+			},
+			wantErr: true,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			ctx := context.Background()
+			resp, err := client.CreateCompletion(ctx, tt.request)
+
+			if (err != nil) != tt.wantErr {
+				t.Errorf("CreateCompletion() error = %v, wantErr %v", err, tt.wantErr)
+				return
+			}
+
+			if tt.validate != nil {
+				tt.validate(t, resp)
+			}
+		})
+	}
+}
+
 func TestExplicitPromptCachingApplies(t *testing.T) {
 	t.Skip("Only run this test locally")
 	client := createTestClient(t)
