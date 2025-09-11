@@ -270,9 +270,27 @@ func (r FinishReason) MarshalJSON() ([]byte, error) {
 	return []byte(`"` + string(r) + `"`), nil // best effort to not break future API changes
 }
 
+type ChatCompletionImageType string
+
+const (
+	StreamImageTypeImageURL ChatCompletionImageType = "image_url"
+)
+
+type ChatCompletionImageURL struct {
+	URL string `json:"url"`
+}
+
+// Image generation: https://openrouter.ai/docs/features/multimodal/image-generation
+type ChatCompletionImage struct {
+	Index    int                     `json:"index"`
+	Type     ChatCompletionImageType `json:"type"`
+	ImageURL ChatCompletionImageURL  `json:"image_url"`
+}
+
 type ChatCompletionChoice struct {
 	Index   int                   `json:"index"`
 	Message ChatCompletionMessage `json:"message"`
+	Images  []ChatCompletionImage `json:"images,omitempty"`
 	// FinishReason
 	// stop: API returned complete message,
 	// or a message terminated by one of the stop sequences provided via the stop parameter
@@ -666,13 +684,14 @@ func (c *Client) CreateChatCompletionStream(
 }
 
 type ChatCompletionStreamChoiceDelta struct {
-	Content      string        `json:"content,omitempty"`
-	Role         string        `json:"role,omitempty"`
-	FunctionCall *FunctionCall `json:"function_call,omitempty"`
-	ToolCalls    []ToolCall    `json:"tool_calls,omitempty"`
-	Refusal      string        `json:"refusal,omitempty"`
-	Annotations  []Annotation  `json:"annotations,omitempty"`
-	Reasoning    *string       `json:"reasoning,omitempty"`
+	Content      string                `json:"content,omitempty"`
+	Role         string                `json:"role,omitempty"`
+	FunctionCall *FunctionCall         `json:"function_call,omitempty"`
+	ToolCalls    []ToolCall            `json:"tool_calls,omitempty"`
+	Refusal      string                `json:"refusal,omitempty"`
+	Annotations  []Annotation          `json:"annotations,omitempty"`
+	Images       []ChatCompletionImage `json:"images,omitempty"`
+	Reasoning    *string               `json:"reasoning,omitempty"`
 
 	// This property is used for the "reasoning" feature supported by deepseek-reasoner
 	// which is not in the official documentation.
