@@ -15,10 +15,15 @@ go get github.com/revrost/go-openrouter
 ## Features
 
 - [x] Chat Completion
+- [x] Completion
 - [x] Streaming
+- [x] Reasoning
 - [x] Tool calling
 - [x] Structured outputs
 - [x] Prompt caching
+- [x] Web search
+- [x] Multimodal [Images, PDFs, Audio]
+- [x] Usage fields
 
 ## Usage
 
