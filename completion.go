@@ -7,10 +7,9 @@ import (
 	"encoding/json"
 	"errors"
 	"io"
+	"log/slog"
 	"net/http"
 	"strings"
-
-	"github.com/rs/zerolog/log"
 )
 
 const completionsSuffix = "/completions"
@@ -170,7 +169,7 @@ func (c *Client) CreateCompletionStream(
 			case <-done:
 				return
 			case <-ctx.Done():
-				log.Info().Msg("Stream stopped due to context cancellation")
+				slog.Info("Stream stopped due to context cancellation")
 				return
 			default:
 				line, err := reader.ReadBytes('\n')
@@ -178,7 +177,7 @@ func (c *Client) CreateCompletionStream(
 					if err == io.EOF {
 						return
 					}
-					log.Error().Err(err).Msg("failed to read completion stream")
+					slog.Error("failed to read completion stream", "error", err)
 					return
 				}
 				// If stream ended with done, stop immediately
@@ -194,9 +193,7 @@ func (c *Client) CreateCompletionStream(
 				// Decode object into a CompletionResponse
 				var chunk CompletionResponse
 				if err := json.Unmarshal(line, &chunk); err != nil {
-					log.Error().Err(err).
-						Str("line", string(line)).
-						Msg("failed to decode completion stream")
+					slog.Error("failed to decode completion stream", "error", err, "line", string(line))
 					return
 				}
 				stream <- chunk
