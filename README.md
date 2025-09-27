@@ -12,17 +12,37 @@ This library provides unofficial Go client for [Openrouter API](https://openrout
 go get github.com/revrost/go-openrouter
 ```
 
+### Getting an Openrouter API Key:
+
+1. Visit the openrouter website at [https://openrouter.ai/docs/quick-start](https://openrouter.ai/docs/quick-start).
+2. If you don't have an account, click on "Sign Up" to create one. If you do, click "Log In".
+3. Once logged in, navigate to your API key management page.
+4. Click on "Create new secret key".
+5. Enter a name for your new key, then click "Create secret key".
+6. Your new API key will be displayed. Use this key to interact with the openrouter API.
+
+**Note:** Your API key is sensitive information. Do not share it with anyone.
+
+For deepseek models, sometimes its better to use openrouter integration feature and pass in your own API key into the control panel for better performance, as openrouter will use your API key to make requests to the underlying model which potentially avoids shared rate limits.
+
 ## Features
 
+https://openrouter.ai/docs/api-reference/overview
+
 - [x] Chat Completion
+- [x] Completion
 - [x] Streaming
+- [x] Reasoning
 - [x] Tool calling
 - [x] Structured outputs
 - [x] Prompt caching
+- [x] Web search
+- [x] Multimodal [Images, PDFs, Audio]
+- [x] Usage fields
 
 ## Usage
 
-### Chat completion usage:
+### Chat completion
 
 ```go
 package main
@@ -42,12 +62,9 @@ func main() {
 	resp, err := client.CreateChatCompletion(
 		context.Background(),
 		openrouter.ChatCompletionRequest{
-			Model: "deepseek/deepseek-chat-v3-0324:free",
+			Model: "deepseek/deepseek-chat-v3.1:free",
 			Messages: []openrouter.ChatCompletionMessage{
-				{
-					Role:    openrouter.ChatMessageRoleUser,
-					Content: openrouter.Content{Text: "Hello!"},
-				},
+                openrouter.UserMessage("Hello!"),
 			},
 		},
 	)
@@ -59,26 +76,9 @@ func main() {
 
 	fmt.Println(resp.Choices[0].Message.Content)
 }
-
 ```
 
-### Getting an Openrouter API Key:
-
-1. Visit the openrouter website at [https://openrouter.ai/docs/quick-start](https://openrouter.ai/docs/quick-start).
-2. If you don't have an account, click on "Sign Up" to create one. If you do, click "Log In".
-3. Once logged in, navigate to your API key management page.
-4. Click on "Create new secret key".
-5. Enter a name for your new key, then click "Create secret key".
-6. Your new API key will be displayed. Use this key to interact with the openrouter API.
-
-**Note:** Your API key is sensitive information. Do not share it with anyone.
-
-For deepseek models, sometimes its better to use openrouter integration feature and pass in your own API key into the control panel for better performance, as openrouter will use your API key to make requests to the underlying model which potentially avoids shared rate limits.
-
-### Other examples:
-
-<details>
-<summary>Streaming Response</summary>
+### Streaming chat completion
 
 ```go
 func main() {
@@ -89,10 +89,8 @@ func main() {
 		context.Background(), openrouter.ChatCompletionRequest{
 			Model: "qwen/qwen3-235b-a22b-07-25:free",
 			Messages: []openrouter.ChatCompletionMessage{
-				{
-					Role:    "user",
-					Content: openrouter.Content{Text: "Hello, how are you?"}},
-			},
+                openrouter.UserMessage("Hello, how are you?"),
+            },
 			Stream: true,
 		},
 	)
@@ -115,7 +113,7 @@ func main() {
 }
 ```
 
-</details>
+### Other examples:
 
 <details>
 <summary>JSON Schema for function calling</summary>

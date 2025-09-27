@@ -7,11 +7,9 @@ import (
 	"encoding/json"
 	"errors"
 	"io"
+	"log/slog"
 	"net/http"
 	"strings"
-
-	"github.com/rs/zerolog"
-	"github.com/rs/zerolog/log"
 )
 
 const (
@@ -663,7 +661,7 @@ func (c *Client) CreateChatCompletionStream(
 			case <-done:
 				return
 			case <-ctx.Done():
-				log.Info().Msg("Stream stopped due to context cancellation")
+				slog.Info("Stream stopped due to context cancellation")
 				return
 			default:
 				line, err := reader.ReadBytes('\n')
@@ -671,7 +669,7 @@ func (c *Client) CreateChatCompletionStream(
 					if err == io.EOF {
 						return
 					}
-					log.Error().Err(err).Msg("failed to read chat completion stream")
+					slog.Error("failed to read chat completion stream", "error", err)
 					return
 				}
 				// If stream ended with done, stop immediately
@@ -687,9 +685,7 @@ func (c *Client) CreateChatCompletionStream(
 				// Decode object into a ChatCompletionResponse
 				var chunk ChatCompletionStreamResponse
 				if err := json.Unmarshal(line, &chunk); err != nil {
-					log.Error().Err(err).
-						Str("line", string(line)).
-						Msg("failed to decode chat completion stream")
+					slog.Error("failed to decode chat completion stream", "error", err, "line", string(line))
 					return
 				}
 				stream <- chunk
@@ -785,12 +781,9 @@ func String(s string) *string {
 	return &s
 }
 
-// SetLogLevel sets the minimum log level for the internally used logger.
-func SetLogLevel(level zerolog.Level) {
-	zerolog.SetGlobalLevel(level)
-}
-
 // DisableLogs disables the internally used logger.
 func DisableLogs() {
-	zerolog.SetGlobalLevel(zerolog.Disabled)
+	discardHandler := slog.NewTextHandler(io.Discard, nil)
+	logger := slog.New(discardHandler)
+	slog.SetDefault(logger)
 }
