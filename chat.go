@@ -306,8 +306,6 @@ type ChatCompletionReasoningDetails struct {
 type ChatCompletionChoice struct {
 	Index            int                              `json:"index"`
 	Message          ChatCompletionMessage            `json:"message"`
-	Images           []ChatCompletionImage            `json:"images,omitempty"`
-	Annotations      []Annotation                     `json:"annotations,omitempty"`
 	Reasoning        *string                          `json:"reasoning,omitempty"`
 	ReasoningDetails []ChatCompletionReasoningDetails `json:"reasoning_details,omitempty"`
 	// FinishReason
@@ -509,6 +507,9 @@ type ChatCompletionMessage struct {
 
 	// Web Search Annotations
 	Annotations []Annotation `json:"annotations,omitempty"`
+
+	// Multi-modal image generation (only in responses)
+	Images []ChatCompletionImage `json:"images,omitempty"`
 }
 
 // MarshalJSON serializes ContentType as a string or array.
