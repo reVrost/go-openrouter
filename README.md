@@ -25,6 +25,9 @@ go get github.com/revrost/go-openrouter
 
 For deepseek models, sometimes its better to use openrouter integration feature and pass in your own API key into the control panel for better performance, as openrouter will use your API key to make requests to the underlying model which potentially avoids shared rate limits.
 
+⚡BYOK (Bring your own keys) gets 1 million free requests per month! 
+https://openrouter.ai/announcements/1-million-free-byok-requests-per-month
+
 ## Features
 
 https://openrouter.ai/docs/api-reference/overview
