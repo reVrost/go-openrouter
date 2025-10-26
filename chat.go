@@ -198,8 +198,8 @@ const (
 type ChatProvider struct {
 	// The order of the providers in the list determines the order in which they are called.
 	Order []string `json:"order,omitempty"`
-	// Allow fallbacks to other providers if the primary provider fails.
-	AllowFallbacks bool `json:"allow_fallbacks,omitempty"`
+	// Allow fallbacks to other providers if the primary provider fails. Default: true
+	AllowFallbacks *bool `json:"allow_fallbacks,omitempty"`
 	// Only use providers that support all parameters in your request.
 	RequireParameters bool `json:"require_parameters,omitempty"`
 	// Control whether to use providers that may store data.
