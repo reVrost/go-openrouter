@@ -111,7 +111,7 @@ type ChatCompletionRequest struct {
 	// Prefer "max_tokens" for limiting output in new integrations.
 	// refs: https://platform.openai.com/docs/api-reference/chat/create#chat-create-max_completion_tokens
 	MaxCompletionTokens int                           `json:"max_completion_tokens,omitempty"`
-	Temperature         float32                       `json:"temperature,omitempty"`
+	Temperature         *float32                      `json:"temperature,omitempty"`
 	TopP                float32                       `json:"top_p,omitempty"`
 	TopK                int                           `json:"top_k,omitempty"`
 	TopA                float32                       `json:"top_a,omitempty"`
