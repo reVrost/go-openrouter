@@ -111,7 +111,7 @@ type ChatCompletionRequest struct {
 	// Prefer "max_tokens" for limiting output in new integrations.
 	// refs: https://platform.openai.com/docs/api-reference/chat/create#chat-create-max_completion_tokens
 	MaxCompletionTokens int                           `json:"max_completion_tokens,omitempty"`
-	Temperature         *float32                      `json:"temperature,omitempty"`
+	Temperature         float32                       `json:"temperature,omitempty"`
 	TopP                float32                       `json:"top_p,omitempty"`
 	TopK                int                           `json:"top_k,omitempty"`
 	TopA                float32                       `json:"top_a,omitempty"`
@@ -198,8 +198,8 @@ const (
 type ChatProvider struct {
 	// The order of the providers in the list determines the order in which they are called.
 	Order []string `json:"order,omitempty"`
-	// Allow fallbacks to other providers if the primary provider fails. Default: true
-	AllowFallbacks *bool `json:"allow_fallbacks,omitempty"`
+	// Allow fallbacks to other providers if the primary provider fails.
+	AllowFallbacks bool `json:"allow_fallbacks,omitempty"`
 	// Only use providers that support all parameters in your request.
 	RequireParameters bool `json:"require_parameters,omitempty"`
 	// Control whether to use providers that may store data.
