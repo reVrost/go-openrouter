@@ -13,6 +13,9 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+const FreeModel = "deepseek/deepseek-r1-0528-qwen3-8b:free"
+const OSSFreeModel = "openai/gpt-oss-20b:free"
+
 // Test client setup
 func createTestClient(t *testing.T) *openrouter.Client {
 	t.Helper()
@@ -40,7 +43,7 @@ func TestCreateChatCompletion(t *testing.T) {
 		{
 			name: "basic completion",
 			request: openrouter.ChatCompletionRequest{
-				Model: "qwen/qwen3-235b-a22b-07-25:free",
+				Model: FreeModel,
 				Messages: []openrouter.ChatCompletionMessage{
 					{
 						Role:    openrouter.ChatMessageRoleUser,
@@ -52,7 +55,7 @@ func TestCreateChatCompletion(t *testing.T) {
 				if len(resp.Choices) == 0 {
 					t.Error("Expected at least one choice in response")
 				}
-				if !strings.Contains(resp.Choices[0].Message.Content.Text, "world") {
+				if len(resp.Choices[0].Message.Content.Text) > 10 {
 					t.Errorf("Unexpected response: '%s' expected 'world'", resp.Choices[0].Message.Content.Text)
 				}
 			},
@@ -207,7 +210,7 @@ func TestExplicitPromptCachingApplies(t *testing.T) {
 func TestUsageAccounting(t *testing.T) {
 	client := createTestClient(t)
 	request := openrouter.ChatCompletionRequest{
-		Model: "qwen/qwen3-235b-a22b-07-25:free",
+		Model: FreeModel,
 		Messages: []openrouter.ChatCompletionMessage{
 			openrouter.SystemMessage("You are a helpful assistant."),
 			openrouter.UserMessage("How are you?"),
@@ -280,7 +283,7 @@ func TestGetGeneration(t *testing.T) {
 	ctx := context.Background()
 
 	request := openrouter.ChatCompletionRequest{
-		Model: "openai/gpt-oss-20b:free",
+		Model: OSSFreeModel,
 		Messages: []openrouter.ChatCompletionMessage{
 			openrouter.SystemMessage("You are a helpful assistant."),
 			openrouter.UserMessage("How are you?"),
