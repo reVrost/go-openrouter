@@ -92,6 +92,13 @@ const (
 	ModalityImage ChatCompletionModality = "image"
 )
 
+// ChatCompletionImageConfig is used to configure the image generation.
+// https://openrouter.ai/docs/features/multimodal/image-generation#image-aspect-ratio-configuration
+// Default '1:1' → 1024×1024 (default)
+type ChatCompletionImageConfig struct {
+	AspectRatio string `json:"aspect_ratio"`
+}
+
 type ChatCompletionRequest struct {
 	Model string `json:"model,omitempty"`
 	// Optional model fallbacks: https://openrouter.ai/docs/features/model-routing#the-models-parameter
@@ -103,6 +110,8 @@ type ChatCompletionRequest struct {
 
 	Plugins    []ChatCompletionPlugin   `json:"plugins,omitempty"`
 	Modalities []ChatCompletionModality `json:"modalities,omitempty"`
+
+	ImageConfig *ChatCompletionImageConfig `json:"image_config,omitempty"`
 
 	// MaxTokens The maximum number of tokens that can be generated in the chat completion.
 	// This value can be used to control costs for text generated via API.
@@ -198,8 +207,8 @@ const (
 type ChatProvider struct {
 	// The order of the providers in the list determines the order in which they are called.
 	Order []string `json:"order,omitempty"`
-	// Allow fallbacks to other providers if the primary provider fails.
-	AllowFallbacks bool `json:"allow_fallbacks,omitempty"`
+	// Allow fallbacks to other providers if the primary provider fails. Default: true
+	AllowFallbacks *bool `json:"allow_fallbacks,omitempty"`
 	// Only use providers that support all parameters in your request.
 	RequireParameters bool `json:"require_parameters,omitempty"`
 	// Control whether to use providers that may store data.

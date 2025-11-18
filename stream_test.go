@@ -8,6 +8,8 @@ import (
 	"io"
 	"testing"
 
+	"log/slog"
+
 	openrouter "github.com/revrost/go-openrouter"
 	"github.com/stretchr/testify/require"
 )
@@ -56,7 +58,7 @@ func TestChatCompletionMessageMarshalJSON_Streaming(t *testing.T) {
 
 	stream, err := client.CreateChatCompletionStream(
 		context.Background(), openrouter.ChatCompletionRequest{
-			Model: "qwen/qwen3-235b-a22b-07-25:free",
+			Model: FreeModel,
 			Messages: []openrouter.ChatCompletionMessage{
 				{
 					Role:    "user",
@@ -80,6 +82,6 @@ func TestChatCompletionMessageMarshalJSON_Streaming(t *testing.T) {
 		}
 		b, err := json.MarshalIndent(response, "", "  ")
 		require.NoError(t, err)
-		fmt.Println(string(b))
+		slog.Debug(string(b))
 	}
 }
