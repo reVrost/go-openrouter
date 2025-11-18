@@ -505,6 +505,8 @@ type ChatCompletionMessage struct {
 
 	// Reasoning Used by all the other models
 	Reasoning *string `json:"reasoning,omitempty"`
+	// Required to preserve reasoning blocks https://openrouter.ai/docs/use-cases/reasoning-tokens#preserving-reasoning-blocks
+	ReasoningDetails []ChatCompletionReasoningDetails `json:"reasoning_details,omitempty"`
 
 	FunctionCall *FunctionCall `json:"function_call,omitempty"`
 
