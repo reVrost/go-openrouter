@@ -77,8 +77,9 @@ const (
 )
 
 type ChatCompletionPlugin struct {
-	ID  PluginID   `json:"id"`
-	PDF *PDFPlugin `json:"pdf,omitempty"`
+	ID         PluginID   `json:"id"`
+	PDF        *PDFPlugin `json:"pdf,omitempty"`
+	MaxResults *int       `json:"max_results,omitempty"`
 }
 
 type PDFPlugin struct {
