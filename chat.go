@@ -465,7 +465,7 @@ type FileContent struct {
 
 // Content handles both string and multi-part content.
 type Content struct {
-	Text  string
+	Text  string `json:"content,omitempty"`
 	Multi []ChatMessagePart
 }
 
