@@ -324,3 +324,13 @@ func TestListUserModels(t *testing.T) {
 	require.NotEmpty(t, models)
 	require.NotEmpty(t, models[0].ID)
 }
+
+func TestListEmbeddingsModels(t *testing.T) {
+	client := createTestClient(t)
+
+	models, err := client.ListEmbeddingsModels(context.Background())
+	require.NoError(t, err)
+
+	require.NotEmpty(t, models)
+	require.NotEmpty(t, models[0].ID)
+}

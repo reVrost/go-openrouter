@@ -6,8 +6,9 @@ import (
 )
 
 const (
-	listModelsSuffix     = "/models"
-	listUserModelsSuffix = "/models/user"
+	listModelsSuffix           = "/models"
+	listUserModelsSuffix       = "/models/user"
+	listEmbeddingsModelsSuffix = "/embeddings/models"
 )
 
 type ModelArchitecture struct {
@@ -87,4 +88,27 @@ func (c *Client) ListUserModels(ctx context.Context) (models []Model, err error)
 
 	models = response.Data
 	return
+}
+
+// ListEmbeddingsModels returns all available embeddings models and their properties.
+// API reference: https://openrouter.ai/docs/api/api-reference/embeddings/list-embeddings-models
+func (c *Client) ListEmbeddingsModels(ctx context.Context) ([]Model, error) {
+	req, err := c.newRequest(
+		ctx,
+		http.MethodGet,
+		c.fullURL(listEmbeddingsModelsSuffix),
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	var response struct {
+		Data []Model `json:"data"`
+	}
+
+	if err := c.sendRequest(req, &response); err != nil {
+		return nil, err
+	}
+
+	return response.Data, nil
 }

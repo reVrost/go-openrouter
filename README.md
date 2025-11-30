@@ -35,6 +35,7 @@ https://openrouter.ai/docs/api-reference/overview
 - [x] Chat Completion
 - [x] Completion
 - [x] Streaming
+- [x] Embeddings
 - [x] Reasoning
 - [x] Tool calling
 - [x] Structured outputs
