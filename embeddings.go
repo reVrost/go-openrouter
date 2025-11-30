@@ -91,11 +91,11 @@ type EmbeddingsUsage struct {
 
 // EmbeddingsResponse represents the response from the /embeddings endpoint.
 type EmbeddingsResponse struct {
-	ID     string            `json:"id"`
-	Object string            `json:"object"`
-	Data   []EmbeddingData   `json:"data"`
-	Model  string            `json:"model"`
-	Usage  *EmbeddingsUsage  `json:"usage,omitempty"`
+	ID     string           `json:"id"`
+	Object string           `json:"object"`
+	Data   []EmbeddingData  `json:"data"`
+	Model  string           `json:"model"`
+	Usage  *EmbeddingsUsage `json:"usage,omitempty"`
 }
 
 // CreateEmbeddings submits an embedding request to the embeddings router.
@@ -104,12 +104,7 @@ type EmbeddingsResponse struct {
 func (c *Client) CreateEmbeddings(
 	ctx context.Context,
 	request EmbeddingsRequest,
-) (response EmbeddingsResponse, err error) {
-	if !isSupportingModel(embeddingsSuffix, request.Model) {
-		// Keep behavior consistent with chat/completions: let the server return a
-		// proper API error until we implement local model validation.
-	}
-
+) (EmbeddingsResponse, error) {
 	req, err := c.newRequest(
 		ctx,
 		http.MethodPost,
@@ -117,11 +112,13 @@ func (c *Client) CreateEmbeddings(
 		withBody(request),
 	)
 	if err != nil {
-		return
+		return EmbeddingsResponse{}, err
 	}
 
-	err = c.sendRequest(req, &response)
-	return
+	var response EmbeddingsResponse
+	if err := c.sendRequest(req, &response); err != nil {
+		return EmbeddingsResponse{}, err
+	}
+
+	return response, nil
 }
-
-
