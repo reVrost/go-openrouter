@@ -93,11 +93,35 @@ const (
 	ModalityImage ChatCompletionModality = "image"
 )
 
+type ChatCompletionAspectRatio string
+
+const (
+	AspectRatio1x1  ChatCompletionAspectRatio = "1:1"
+	AspectRatio2x3  ChatCompletionAspectRatio = "2:3"
+	AspectRatio3x2  ChatCompletionAspectRatio = "3:2"
+	AspectRatio3x4  ChatCompletionAspectRatio = "3:4"
+	AspectRatio4x3  ChatCompletionAspectRatio = "4:3"
+	AspectRatio4x5  ChatCompletionAspectRatio = "4:5"
+	AspectRatio5x4  ChatCompletionAspectRatio = "5:4"
+	AspectRatio9x16 ChatCompletionAspectRatio = "9:16"
+	AspectRatio16x9 ChatCompletionAspectRatio = "16:9"
+	AspectRatio21x9 ChatCompletionAspectRatio = "21:9"
+)
+
+type ChatCompletionImageSize string
+
+const (
+	ImageSize1K ChatCompletionImageSize = "1K"
+	ImageSize2K ChatCompletionImageSize = "2K"
+	ImageSize4K ChatCompletionImageSize = "4K"
+)
+
 // ChatCompletionImageConfig is used to configure the image generation.
 // https://openrouter.ai/docs/features/multimodal/image-generation#image-aspect-ratio-configuration
 // Default '1:1' → 1024×1024 (default)
 type ChatCompletionImageConfig struct {
-	AspectRatio string `json:"aspect_ratio"`
+	AspectRatio ChatCompletionAspectRatio `json:"aspect_ratio,omitempty"`
+	ImageSize   ChatCompletionImageSize   `json:"image_size,omitempty"`
 }
 
 type ChatCompletionRequest struct {
