@@ -50,6 +50,9 @@ type CompletionRequest struct {
 	MinP        float32        `json:"min_p,omitempty"`
 	TopA        float32        `json:"top_a,omitempty"`
 	User        string         `json:"user,omitempty"`
+	// For usage with the broadcast feature. Group related requests together (such as a conversation or agent workflow) by including the session_id field (up to 128 characters).
+	// https://openrouter.ai/docs/guides/features/broadcast/overview#optional-trace-data
+	SessionId string `json:"session_id,omitempty"`
 }
 
 type CompletionChoice struct {
