@@ -58,8 +58,15 @@ func (c *Client) sendRequest(req *http.Request, v any) error {
 }
 
 func (c *Client) setCommonHeaders(req *http.Request) {
-	req.Header.Set("HTTP-Referer", c.config.HttpReferer)
-	req.Header.Set("X-Title", c.config.XTitle)
+	if c.config.HttpReferer != "" {
+		req.Header.Set("HTTP-Referer", c.config.HttpReferer)
+	}
+	if c.config.XTitle != "" {
+		req.Header.Set("X-Title", c.config.XTitle)
+	}
+	if c.config.SessionId != "" {
+		req.Header.Set("x-session-id", c.config.SessionId)
+	}
 	req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", c.config.authToken))
 }
 
