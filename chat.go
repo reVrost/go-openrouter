@@ -171,6 +171,9 @@ type ChatCompletionRequest struct {
 	// logprobs must be set to true if this parameter is used.
 	TopLogProbs int    `json:"top_logprobs,omitempty"`
 	User        string `json:"user,omitempty"`
+	// For usage with the broadcast feature. Group related requests together (such as a conversation or agent workflow) by including the session_id field (up to 128 characters).
+	// https://openrouter.ai/docs/guides/features/broadcast/overview#optional-trace-data
+	SessionId string `json:"session_id,omitempty"`
 	// Deprecated: use Tools instead.
 	Functions []FunctionDefinition `json:"functions,omitempty"`
 	// Deprecated: use ToolChoice instead.
