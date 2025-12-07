@@ -12,7 +12,6 @@ type ClientConfig struct {
 	HTTPClient       HTTPDoer
 	HttpReferer      string
 	XTitle           string
-	SessionId        string
 
 	EmptyMessagesLimit uint
 }
@@ -31,7 +30,6 @@ func DefaultConfig(authToken string) *ClientConfig {
 		BaseURL:          "https://openrouter.ai/api/v1",
 		AssistantVersion: "",
 		OrgID:            "",
-		SessionId:        "",
 
 		HTTPClient: &http.Client{},
 
@@ -50,11 +48,5 @@ func WithXTitle(title string) Option {
 func WithHTTPReferer(referer string) Option {
 	return func(c *ClientConfig) {
 		c.HttpReferer = referer
-	}
-}
-
-func WithSessionId(sessionId string) Option {
-	return func(c *ClientConfig) {
-		c.SessionId = sessionId
 	}
 }
