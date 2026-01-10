@@ -821,6 +821,11 @@ func String(s string) *string {
 	return &s
 }
 
+// Bool is a helper function returns a pointer to the string value passed in.
+func Bool(s bool) *bool {
+	return &s
+}
+
 // DisableLogs disables the internally used logger.
 func DisableLogs() {
 	discardHandler := slog.NewTextHandler(io.Discard, nil)
