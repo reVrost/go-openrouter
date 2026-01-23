@@ -334,3 +334,19 @@ func TestListEmbeddingsModels(t *testing.T) {
 	require.NotEmpty(t, models)
 	require.NotEmpty(t, models[0].ID)
 }
+
+func TestGetCurrentAPIKey(t *testing.T) {
+	client := createTestClient(t)
+
+	resp, err := client.GetCurrentAPIKey(context.Background())
+	require.NoError(t, err)
+
+	require.NotNil(t, resp.Data.Label)
+	require.NotEmpty(t, resp.Data.Label)
+
+	require.GreaterOrEqual(t, resp.Data.Usage, float64(0))
+
+	if resp.Data.RateLimit != nil {
+		require.NotEmpty(t, resp.Data.RateLimit.Interval)
+	}
+}
