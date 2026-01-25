@@ -3,6 +3,8 @@ package openrouter
 import (
 	"context"
 	"net/http"
+	"path"
+	"time"
 )
 
 const (
@@ -44,9 +46,9 @@ type APIKey struct {
 	ByokUsageWeekly  float64 `json:"byok_usage_weekly,omitempty"`
 	ByokUsageMonthly float64 `json:"byok_usage_monthly,omitempty"`
 
-	CreatedAt string  `json:"created_at,omitempty"`
-	UpdatedAt *string `json:"updated_at,omitempty"`
-	ExpiresAt *string `json:"expires_at,omitempty"`
+	CreatedAt time.Time  `json:"created_at,omitempty"`
+	UpdatedAt *time.Time `json:"updated_at,omitempty"`
+	ExpiresAt *time.Time `json:"expires_at,omitempty"`
 }
 
 type APIKeyCurrent struct {
@@ -66,7 +68,7 @@ type APIKeyCurrent struct {
 	LimitReset         KeyLimitReset `json:"limit_reset,omitempty"`
 	IncludeByokInLimit bool          `json:"include_byok_in_limit,omitempty"`
 	RateLimit          *APIRateLimit `json:"rate_limit,omitempty"`
-	ExpiresAt          *string       `json:"expires_at,omitempty"`
+	ExpiresAt          *time.Time    `json:"expires_at,omitempty"`
 }
 
 type APIKeysListResponse struct {
@@ -95,7 +97,7 @@ type APIKeyCreateRequest struct {
 	Limit              float64       `json:"limit,omitempty"`
 	LimitReset         KeyLimitReset `json:"limit_reset,omitempty"`
 	IncludeByokInLimit *bool         `json:"include_byok_in_limit,omitempty"`
-	ExpiresAt          *string       `json:"expires_at,omitempty"`
+	ExpiresAt          *time.Time    `json:"expires_at,omitempty"`
 }
 
 type APIKeyUpdateRequest struct {
@@ -104,7 +106,7 @@ type APIKeyUpdateRequest struct {
 	Limit              *float64       `json:"limit,omitempty"`
 	LimitReset         *KeyLimitReset `json:"limit_reset,omitempty"`
 	IncludeByokInLimit *bool          `json:"include_byok_in_limit,omitempty"`
-	ExpiresAt          *string        `json:"expires_at,omitempty"`
+	ExpiresAt          *time.Time     `json:"expires_at,omitempty"`
 }
 
 // ListAPIKeys lists all API keys for the current account.
@@ -152,7 +154,7 @@ func (c *Client) GetAPIKey(ctx context.Context, hash string) (APIKeyResponse, er
 	req, err := c.newRequest(
 		ctx,
 		http.MethodGet,
-		c.fullURL(apiKeysSuffix+"/"+hash),
+		c.fullURL(path.Join(apiKeysSuffix, hash)),
 	)
 	if err != nil {
 		return res, err
@@ -169,7 +171,7 @@ func (c *Client) DeleteAPIKey(ctx context.Context, hash string) (APIKeyDeleteRes
 	req, err := c.newRequest(
 		ctx,
 		http.MethodDelete,
-		c.fullURL(apiKeysSuffix+"/"+hash),
+		c.fullURL(path.Join(apiKeysSuffix, hash)),
 	)
 	if err != nil {
 		return res, err
@@ -190,7 +192,7 @@ func (c *Client) UpdateAPIKey(
 	req, err := c.newRequest(
 		ctx,
 		http.MethodPatch,
-		c.fullURL(apiKeysSuffix+"/"+hash),
+		c.fullURL(path.Join(apiKeysSuffix, hash)),
 		withBody(request),
 	)
 	if err != nil {
