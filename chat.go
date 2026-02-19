@@ -188,9 +188,11 @@ type ChatCompletionRequest struct {
 	// Store can be set to true to store the output of this completion request for use in distillations and evals.
 	// https://platform.openai.com/docs/api-reference/chat/create#chat-create-store
 	Store bool `json:"store,omitempty"`
-	// Metadata to store with the completion. Values can be strings or nested objects (e.g. a ChatCompletionTrace under the "trace" key).
+	// Metadata to store with the completion.
+	Metadata map[string]string `json:"metadata,omitempty"`
+	// Trace provides structured tracing metadata for observability integrations.
 	// https://openrouter.ai/docs/guides/features/broadcast/overview#custom-metadata
-	Metadata map[string]any `json:"metadata,omitempty"`
+	Trace *ChatCompletionTrace `json:"trace,omitempty"`
 	// Apply message transforms
 	// https://openrouter.ai/docs/features/message-transforms
 	Transforms []string `json:"transforms,omitempty"`
