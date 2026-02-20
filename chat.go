@@ -257,6 +257,7 @@ type ChatCompletionResponse struct {
 	Object            string                 `json:"object"`
 	Created           int64                  `json:"created"`
 	Model             string                 `json:"model"`
+	Provider          string                 `json:"provider"`
 	Choices           []ChatCompletionChoice `json:"choices"`
 	Citations         []string               `json:"citations"`
 	Usage             *Usage                 `json:"usage,omitempty"`
@@ -787,6 +788,7 @@ type ChatCompletionStreamResponse struct {
 	Object              string                       `json:"object"`
 	Created             int64                        `json:"created"`
 	Model               string                       `json:"model"`
+	Provider            string                       `json:"provider"`
 	Choices             []ChatCompletionStreamChoice `json:"choices"`
 	SystemFingerprint   string                       `json:"system_fingerprint"`
 	PromptAnnotations   []PromptAnnotation           `json:"prompt_annotations,omitempty"`
