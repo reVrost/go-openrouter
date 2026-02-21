@@ -190,6 +190,9 @@ type ChatCompletionRequest struct {
 	Store bool `json:"store,omitempty"`
 	// Metadata to store with the completion.
 	Metadata map[string]string `json:"metadata,omitempty"`
+	// Trace provides structured tracing metadata for observability integrations.
+	// https://openrouter.ai/docs/guides/features/broadcast/overview#custom-metadata
+	Trace *ChatCompletionTrace `json:"trace,omitempty"`
 	// Apply message transforms
 	// https://openrouter.ai/docs/features/message-transforms
 	Transforms []string `json:"transforms,omitempty"`
@@ -214,6 +217,22 @@ type WebSearchOptions struct {
 
 type IncludeUsage struct {
 	Include bool `json:"include"`
+}
+
+// ChatCompletionTrace provides structured tracing metadata for observability integrations.
+// Use it as the value for the "trace" key in ChatCompletionRequest.Metadata.
+// https://openrouter.ai/docs/guides/features/broadcast/overview#custom-metadata
+type ChatCompletionTrace struct {
+	// TraceID groups multiple API requests into a single trace.
+	TraceID string `json:"trace_id,omitempty"`
+	// TraceName is a custom identifier for the root trace; defaults to the model name.
+	TraceName string `json:"trace_name,omitempty"`
+	// SpanName creates a parent span that groups LLM operations.
+	SpanName string `json:"span_name,omitempty"`
+	// GenerationName is a custom identifier for this specific LLM call.
+	GenerationName string `json:"generation_name,omitempty"`
+	// ParentSpanID links this trace to an existing span in your own tracing system (e.g. OpenTelemetry).
+	ParentSpanID string `json:"parent_span_id,omitempty"`
 }
 
 type DataCollection string
