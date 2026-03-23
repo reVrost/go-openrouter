@@ -91,6 +91,8 @@ type ChatCompletionModality string
 const (
 	ModalityText  ChatCompletionModality = "text"
 	ModalityImage ChatCompletionModality = "image"
+	// https://openrouter.ai/docs/guides/overview/multimodal/audio
+	ModalityAudio ChatCompletionModality = "audio"
 )
 
 type ChatCompletionAspectRatio string
@@ -124,6 +126,15 @@ type ChatCompletionImageConfig struct {
 	ImageSize   ChatCompletionImageSize   `json:"image_size,omitempty"`
 }
 
+type ChatCompletionAudioConfig struct {
+	// The desired voice for the audio output.
+	// Supported voices: alloy, echo, fable, onyx, nova, shimmer
+	Voice AudioVoice `json:"voice,omitempty"`
+	// The desired format of the input audio.
+	// Supported formats: mp3, wav, flac, opus, pcm16, pcm24, aiff, aac, ogg, m4a
+	Format AudioFormat `json:"format,omitempty"`
+}
+
 type ChatCompletionRequest struct {
 	Model string `json:"model,omitempty"`
 	// Optional model fallbacks: https://openrouter.ai/docs/features/model-routing#the-models-parameter
@@ -136,7 +147,11 @@ type ChatCompletionRequest struct {
 	Plugins    []ChatCompletionPlugin   `json:"plugins,omitempty"`
 	Modalities []ChatCompletionModality `json:"modalities,omitempty"`
 
+	// https://openrouter.ai/docs/guides/overview/multimodal/image-generation (Only in request)
 	ImageConfig *ChatCompletionImageConfig `json:"image_config,omitempty"`
+
+	// https://openrouter.ai/docs/guides/overview/multimodal/audio (Only in request)
+	AudioConfig *ChatCompletionAudioConfig `json:"audio,omitempty"`
 
 	// MaxTokens The maximum number of tokens that can be generated in the chat completion.
 	// This value can be used to control costs for text generated via API.
@@ -342,6 +357,13 @@ type ChatCompletionImage struct {
 	ImageURL ChatCompletionImageURL  `json:"image_url"`
 }
 
+// ChatCompletionAudio represents audio output in a response.
+// https://openrouter.ai/docs/guides/overview/multimodal/audio#streaming-chunk-format
+type ChatCompletionAudio struct {
+	Data       string `json:"data,omitempty"`
+	Transcript string `json:"transcript,omitempty"`
+}
+
 type ChatCompletionReasoningDetailsType string
 
 const (
@@ -493,11 +515,35 @@ type ChatMessageImageURL struct {
 	Detail ImageURLDetail `json:"detail,omitempty"`
 }
 
+// Here we define the supported audio formats for the ChatMessageInputAudio struct, based on the OpenRouter documentation.
+// https://openrouter.ai/docs/guides/overview/multimodal/audio#supported-audio-input-formats
+// https://openrouter.ai/docs/guides/overview/multimodal/audio#audio-configuration-options
 type AudioFormat string
 
 const (
-	AudioFormatMp3 AudioFormat = AudioFormat("mp3")
-	AudioFormatWav AudioFormat = AudioFormat("wav")
+	AudioFormatMp3   AudioFormat = AudioFormat("mp3")
+	AudioFormatWav   AudioFormat = AudioFormat("wav")
+	AudioFormatFlac  AudioFormat = AudioFormat("flac")
+	AudioFormatOpus  AudioFormat = AudioFormat("opus")
+	AudioFormatPcm16 AudioFormat = AudioFormat("pcm16")
+	AudioFormatPcm24 AudioFormat = AudioFormat("pcm24")
+	AudioFormatAiff  AudioFormat = AudioFormat("aiff")
+	AudioFormatAac   AudioFormat = AudioFormat("aac")
+	AudioFormatOgg   AudioFormat = AudioFormat("ogg")
+	AudioFormatM4a   AudioFormat = AudioFormat("m4a")
+)
+
+// Here we define the supported audio voices for the ChatCompletionAudioConfig struct, based on the OpenRouter documentation.
+// https://openrouter.ai/docs/guides/overview/multimodal/audio#audio-configuration-options
+type AudioVoice string
+
+const (
+	AudioVoiceAlloy   AudioVoice = "alloy"
+	AudioVoiceEcho    AudioVoice = "echo"
+	AudioVoiceFable   AudioVoice = "fable"
+	AudioVoiceOnyx    AudioVoice = "onyx"
+	AudioVoiceNova    AudioVoice = "nova"
+	AudioVoiceShimmer AudioVoice = "shimmer"
 )
 
 type ChatMessageInputAudio struct {
@@ -570,6 +616,9 @@ type ChatCompletionMessage struct {
 
 	// Multi-modal image generation (only in responses)
 	Images []ChatCompletionImage `json:"images,omitempty"`
+
+	// Multi-modal audio output (only in responses)
+	Audio *ChatCompletionAudio `json:"audio,omitempty"`
 }
 
 // MarshalJSON serializes ContentType as a string or array.
@@ -769,6 +818,7 @@ type ChatCompletionStreamChoiceDelta struct {
 	Refusal          string                           `json:"refusal,omitempty"`
 	Annotations      []Annotation                     `json:"annotations,omitempty"`
 	Images           []ChatCompletionImage            `json:"images,omitempty"`
+	Audio            *ChatCompletionAudio             `json:"audio,omitempty"`
 	Reasoning        *string                          `json:"reasoning,omitempty"`
 	ReasoningDetails []ChatCompletionReasoningDetails `json:"reasoning_details,omitempty"`
 

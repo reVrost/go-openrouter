@@ -6,6 +6,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"strings"
 	"testing"
 
 	"log/slog"
@@ -84,4 +85,67 @@ func TestChatCompletionMessageMarshalJSON_Streaming(t *testing.T) {
 		require.NoError(t, err)
 		slog.Debug(string(b))
 	}
+}
+
+// Test streaming with audio output
+// Based on: https://openrouter.ai/docs/guides/overview/multimodal/audio#requesting-audio-output
+func TestChatCompletionStreamingWithAudioOutput(t *testing.T) {
+	client := createTestClient(t)
+
+	stream, err := client.CreateChatCompletionStream(
+		context.Background(), openrouter.ChatCompletionRequest{
+			Model: "openai/gpt-4o-audio-preview",
+			Messages: []openrouter.ChatCompletionMessage{
+				{
+					Role:    "user",
+					Content: openrouter.Content{Text: "Say Aldiwildan in a friendly tone."},
+				},
+			},
+			Modalities: []openrouter.ChatCompletionModality{
+				openrouter.ModalityText,
+				openrouter.ModalityAudio,
+			},
+			AudioConfig: &openrouter.ChatCompletionAudioConfig{
+				Voice:  openrouter.AudioVoiceAlloy,
+				Format: openrouter.AudioFormatPcm16, // gpt-4o-audio-preview only supports pcm16 for now
+			},
+			Stream: true,
+		},
+	)
+	require.NoError(t, err)
+	defer stream.Close()
+
+	var audioDataChunks []string
+	var transcriptChunks []string
+
+	for {
+		response, err := stream.Recv()
+		if err != nil && err != io.EOF {
+			require.NoError(t, err)
+		}
+		if errors.Is(err, io.EOF) {
+			slog.Info("EOF, stream finished")
+			break
+		}
+
+		for _, choice := range response.Choices {
+			if choice.Delta.Audio != nil {
+				if choice.Delta.Audio.Data != "" {
+					audioDataChunks = append(audioDataChunks, choice.Delta.Audio.Data)
+				}
+				if choice.Delta.Audio.Transcript != "" {
+					transcriptChunks = append(transcriptChunks, choice.Delta.Audio.Transcript)
+				}
+			}
+		}
+	}
+
+	transcript := strings.Join(transcriptChunks, "")
+	fullAudioB64 := strings.Join(audioDataChunks, "")
+
+	slog.Debug(fmt.Sprintf("Transcript: %s\n", transcript))
+	slog.Debug(fmt.Sprintf("Audio data length (base64): %d\n", len(fullAudioB64)))
+
+	require.NotEmpty(t, transcript, "transcript should not be empty")
+	require.NotEmpty(t, fullAudioB64, "audio data should not be empty")
 }
