@@ -42,8 +42,8 @@ var (
 )
 
 type ChatCompletionReasoning struct {
-	// Effort The prompt that was used to generate the reasoning. [high, medium, low]
-	Effort *string `json:"prompt,omitempty"`
+	// Effort controls reasoning intensity. Values: "xhigh", "high", "medium", "low", "minimal", "none".
+	Effort *string `json:"effort,omitempty"`
 
 	// MaxTokens cannot be simultaneously used with effort.
 	MaxTokens *int `json:"max_tokens,omitempty"`
