@@ -95,6 +95,20 @@ func TestChatCompletionMessageMarshalJSON_MultiContent_WithPDF(t *testing.T) {
 	marshalAndValidate(t, message, expected)
 }
 
+func TestChatCompletionReasoningMarshalJSON(t *testing.T) {
+	effort := "high"
+	reasoning := openrouter.ChatCompletionReasoning{Effort: &effort}
+	data, err := json.Marshal(reasoning)
+	if err != nil {
+		t.Fatalf("expected no error, got %v", err)
+	}
+
+	expected := `{"effort":"high"}`
+	if string(data) != expected {
+		t.Errorf("expected %s, got %s", expected, string(data))
+	}
+}
+
 func TestChatCompletionMessagePromptCachingApplies(t *testing.T) {
 	message := openrouter.ChatCompletionMessage{
 		Role: openrouter.ChatMessageRoleUser,
