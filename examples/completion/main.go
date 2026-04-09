@@ -17,7 +17,7 @@ func main() {
 		Messages: []openrouter.ChatCompletionMessage{
 			{
 				Role:    openrouter.ChatMessageRoleSystem,
-				Content: openrouter.Content{Text: "You are a helfpul assistant."},
+				Content: openrouter.Content{Text: "You are a helpful assistant."},
 			},
 			{
 				Role:    openrouter.ChatMessageRoleUser,
@@ -32,6 +32,6 @@ func main() {
 		fmt.Println("error", err)
 	} else {
 		b, _ := json.MarshalIndent(res, "", "\t")
-		fmt.Printf("request :\n %s", string(b))
+		fmt.Printf("response :\n %s", string(b))
 	}
 }
