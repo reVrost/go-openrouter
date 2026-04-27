@@ -682,6 +682,53 @@ func isSupportingModel(suffix, model string) bool {
 	return true
 }
 
+const (
+	// StatusEdgeNetworkTimeout is OpenRouter's Cloudflare-style timeout status.
+	StatusEdgeNetworkTimeout = 524
+	// StatusProviderOverloaded is OpenRouter's provider overloaded status.
+	StatusProviderOverloaded = 529
+)
+
+var defaultChatCompletionFallbackErrorCodes = []int{
+	http.StatusPaymentRequired,
+	http.StatusRequestTimeout,
+	http.StatusTooManyRequests,
+	http.StatusInternalServerError,
+	http.StatusBadGateway,
+	http.StatusServiceUnavailable,
+	http.StatusGatewayTimeout,
+	StatusEdgeNetworkTimeout,
+	StatusProviderOverloaded,
+}
+
+// DefaultChatCompletionFallbackErrorCodes returns the OpenRouter error codes
+// that trigger client-side chat completion model fallback by default.
+func DefaultChatCompletionFallbackErrorCodes() []int {
+	return append([]int(nil), defaultChatCompletionFallbackErrorCodes...)
+}
+
+// ChatCompletionFallbackPolicy configures client-side fallback attempts.
+type ChatCompletionFallbackPolicy struct {
+	// Models are tried after request.Model on fallbackable OpenRouter errors.
+	Models []string
+	// ErrorCodes optionally overrides the default OpenRouter fallback error codes.
+	ErrorCodes []int
+}
+
+func (p ChatCompletionFallbackPolicy) shouldFallback(err error) bool {
+	errorCodes := p.ErrorCodes
+	if len(errorCodes) == 0 {
+		errorCodes = defaultChatCompletionFallbackErrorCodes
+	}
+
+	for _, code := range errorCodes {
+		if IsErrorCode(err, code) {
+			return true
+		}
+	}
+	return false
+}
+
 // CreateChatCompletion — API call to Create a completion for the chat message.
 func (c *Client) CreateChatCompletion(
 	ctx context.Context,
@@ -711,10 +758,100 @@ func (c *Client) CreateChatCompletion(
 	return
 }
 
+// CreateChatCompletionWithFallback tries request.Model first, then fallbackModels
+// when OpenRouter returns a fallbackable error.
+func (c *Client) CreateChatCompletionWithFallback(
+	ctx context.Context,
+	request ChatCompletionRequest,
+	fallbackModels ...string,
+) (ChatCompletionResponse, error) {
+	return c.CreateChatCompletionWithFallbackPolicy(ctx, request, ChatCompletionFallbackPolicy{
+		Models: fallbackModels,
+	})
+}
+
+// CreateChatCompletionWithFallbackPolicy tries request.Model first, then
+// policy.Models according to policy's fallback rules.
+func (c *Client) CreateChatCompletionWithFallbackPolicy(
+	ctx context.Context,
+	request ChatCompletionRequest,
+	policy ChatCompletionFallbackPolicy,
+) (ChatCompletionResponse, error) {
+	resp, err := c.CreateChatCompletion(ctx, request)
+	if err == nil {
+		return resp, err
+	}
+
+	lastErr := err
+	for _, model := range policy.Models {
+		if model == "" {
+			continue
+		}
+		if !policy.shouldFallback(lastErr) {
+			break
+		}
+
+		fallbackReq := request
+		fallbackReq.Model = model
+		resp, err = c.CreateChatCompletion(ctx, fallbackReq)
+		if err == nil {
+			return resp, nil
+		}
+		lastErr = err
+	}
+
+	return ChatCompletionResponse{}, lastErr
+}
+
 type ChatCompletionStream struct {
 	stream   <-chan ChatCompletionStreamResponse
 	done     chan struct{}
 	response *http.Response
+}
+
+// CreateChatCompletionStreamWithFallback tries request.Model first, then
+// fallbackModels when OpenRouter returns a fallbackable error before streaming.
+func (c *Client) CreateChatCompletionStreamWithFallback(
+	ctx context.Context,
+	request ChatCompletionRequest,
+	fallbackModels ...string,
+) (*ChatCompletionStream, error) {
+	return c.CreateChatCompletionStreamWithFallbackPolicy(ctx, request, ChatCompletionFallbackPolicy{
+		Models: fallbackModels,
+	})
+}
+
+// CreateChatCompletionStreamWithFallbackPolicy tries request.Model first, then
+// policy.Models according to policy's fallback rules before streaming starts.
+func (c *Client) CreateChatCompletionStreamWithFallbackPolicy(
+	ctx context.Context,
+	request ChatCompletionRequest,
+	policy ChatCompletionFallbackPolicy,
+) (*ChatCompletionStream, error) {
+	stream, err := c.CreateChatCompletionStream(ctx, request)
+	if err == nil {
+		return stream, nil
+	}
+
+	lastErr := err
+	for _, model := range policy.Models {
+		if model == "" {
+			continue
+		}
+		if !policy.shouldFallback(lastErr) {
+			break
+		}
+
+		fallbackReq := request
+		fallbackReq.Model = model
+		stream, err = c.CreateChatCompletionStream(ctx, fallbackReq)
+		if err == nil {
+			return stream, nil
+		}
+		lastErr = err
+	}
+
+	return nil, lastErr
 }
 
 // CreateChatCompletionStream — API call to Create a completion for the chat message with streaming.

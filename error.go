@@ -2,6 +2,7 @@ package openrouter
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"strings"
 )
@@ -33,6 +34,49 @@ type RequestError struct {
 
 type ErrorResponse struct {
 	Error *APIError `json:"error,omitempty"`
+}
+
+// HTTPStatusCode returns the HTTP status code carried by OpenRouter API errors.
+func HTTPStatusCode(err error) (int, bool) {
+	var apiErr *APIError
+	if errors.As(err, &apiErr) {
+		return apiErr.HTTPStatusCode, apiErr.HTTPStatusCode != 0
+	}
+
+	var reqErr *RequestError
+	if errors.As(err, &reqErr) {
+		return reqErr.HTTPStatusCode, reqErr.HTTPStatusCode != 0
+	}
+
+	return 0, false
+}
+
+// APIErrorCode returns the OpenRouter API error code carried by API errors.
+func APIErrorCode(err error) (any, bool) {
+	var apiErr *APIError
+	if errors.As(err, &apiErr) {
+		return apiErr.Code, apiErr.Code != nil
+	}
+
+	return nil, false
+}
+
+// IsHTTPStatus reports whether err carries the provided HTTP status code.
+func IsHTTPStatus(err error, statusCode int) bool {
+	code, ok := HTTPStatusCode(err)
+	return ok && code == statusCode
+}
+
+// IsAPIErrorCode reports whether err carries the provided OpenRouter API error code.
+func IsAPIErrorCode(err error, code any) bool {
+	apiCode, ok := APIErrorCode(err)
+	return ok && fmt.Sprint(apiCode) == fmt.Sprint(code)
+}
+
+// IsErrorCode reports whether err carries code as either its HTTP status code
+// or OpenRouter API error code.
+func IsErrorCode(err error, code int) bool {
+	return IsHTTPStatus(err, code) || IsAPIErrorCode(err, code)
 }
 
 func (e *ProviderError) Message() any {

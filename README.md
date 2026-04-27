@@ -117,6 +117,103 @@ func main() {
 }
 ```
 
+### Chat completion with model fallback
+
+Use `CreateChatCompletionWithFallback` when you want the client to try a backup
+model if OpenRouter returns a fallbackable error for the primary model.
+
+The fallback decision is handled by the library. You only provide fallback
+models, in the order they should be tried.
+
+```go
+package main
+
+import (
+	"context"
+	"fmt"
+	"os"
+
+	openrouter "github.com/revrost/go-openrouter"
+)
+
+func main() {
+	ctx := context.Background()
+	client := openrouter.NewClient(os.Getenv("OPENROUTER_API_KEY"))
+
+	resp, err := client.CreateChatCompletionWithFallback(
+		ctx,
+		openrouter.ChatCompletionRequest{
+			Model: "deepseek/deepseek-v4-flash",
+			Messages: []openrouter.ChatCompletionMessage{
+				openrouter.UserMessage("Summarize today's market news in one paragraph."),
+			},
+		},
+		"xiaomi/mimo-v2-flash",
+	)
+	if err != nil {
+		fmt.Printf("ChatCompletion error: %v\n", err)
+		return
+	}
+
+	fmt.Println(resp.Choices[0].Message.Content)
+}
+```
+
+By default, chat completion fallback is triggered for these OpenRouter error
+codes, based on the documented chat completion errors in
+[OpenRouter's OpenAPI spec](https://openrouter.ai/openapi.yaml):
+
+- `402 Payment Required`
+- `408 Request Timeout`
+- `429 Too Many Requests`
+- `500 Internal Server Error`
+- `502 Bad Gateway`
+- `503 Service Unavailable`
+- `504 Gateway Timeout`
+- `524 Infrastructure Timeout`
+- `529 Provider Overloaded`
+
+The client checks both the HTTP status code and the OpenRouter API error code,
+because provider errors can surface the useful code in the JSON error body.
+Fallback is not triggered for request or auth errors such as `400`, `401`,
+`404`, `413`, or `422`.
+
+For streaming, fallback can only happen before a stream is returned:
+
+```go
+stream, err := client.CreateChatCompletionStreamWithFallback(
+	ctx,
+	openrouter.ChatCompletionRequest{
+		Model: "deepseek/deepseek-v4-flash",
+		Messages: []openrouter.ChatCompletionMessage{
+			openrouter.UserMessage("Write a short investor update."),
+		},
+	},
+	"xiaomi/mimo-v2-flash",
+)
+if err != nil {
+	fmt.Printf("ChatCompletionStream error: %v\n", err)
+	return
+}
+defer stream.Close()
+```
+
+If you need custom fallback rules, use the policy API:
+
+```go
+resp, err := client.CreateChatCompletionWithFallbackPolicy(
+	ctx,
+	request,
+	openrouter.ChatCompletionFallbackPolicy{
+		Models:     []string{"anthropic/claude-sonnet-4.5"},
+		ErrorCodes: []int{402, 429},
+	},
+)
+```
+
+`DefaultChatCompletionFallbackErrorCodes` returns a copy of the library default
+code list if you want to inspect or extend it.
+
 ### Other examples:
 
 <details>
