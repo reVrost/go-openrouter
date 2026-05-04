@@ -744,7 +744,8 @@ func (c *Client) CreateChatCompletion(
 		return
 	}
 
-	req, err := c.newRequest(
+	var req *http.Request
+	req, err = c.newRequest(
 		ctx,
 		http.MethodPost,
 		c.fullURL(chatCompletionsSuffix),
