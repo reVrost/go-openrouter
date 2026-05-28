@@ -377,13 +377,19 @@ const (
 )
 
 type ChatCompletionReasoningDetails struct {
-	ID      string                             `json:"id,omitempty"`
-	Index   int                                `json:"index"`
-	Type    ChatCompletionReasoningDetailsType `json:"type"`
-	Text    string                             `json:"text,omitempty"`
-	Summary string                             `json:"summary,omitempty"`
-	Data    string                             `json:"data,omitempty"`
-	Format  string                             `json:"format,omitempty"`
+	ID    string                             `json:"id,omitempty"`
+	Index int                                `json:"index"`
+	Type  ChatCompletionReasoningDetailsType `json:"type"`
+	// Text holds the reasoning content for type=reasoning.text.
+	Text string `json:"text,omitempty"`
+	// Summary holds the summarized reasoning for type=reasoning.summary.
+	Summary string `json:"summary,omitempty"`
+	// Data holds the opaque payload for type=reasoning.encrypted.
+	Data string `json:"data,omitempty"`
+	// Format identifies the provider-specific encoding, e.g. "anthropic-claude-v1".
+	Format string `json:"format,omitempty"`
+	// Signature is the provider-issued signature for some type=reasoning.text payloads.
+	Signature string `json:"signature,omitempty"`
 }
 
 type ChatCompletionChoice struct {
