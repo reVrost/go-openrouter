@@ -14,41 +14,100 @@ const (
 
 type ModelArchitecture struct {
 	InputModalities  []string `json:"input_modalities"`
+	Modality         *string  `json:"modality"`
 	OutputModalities []string `json:"output_modalities"`
+	InstructType     *string  `json:"instruct_type"`
 	Tokenizer        string   `json:"tokenizer"`
-	InstructType     *string  `json:"instruct_type,omitempty"`
+}
+
+type ModelDefaultParameters struct {
+	FrequencyPenalty  *float64 `json:"frequency_penalty"`
+	PresencePenalty   *float64 `json:"presence_penalty"`
+	RepetitionPenalty *float64 `json:"repetition_penalty"`
+	Temperature       *float64 `json:"temperature"`
+	TopK              *int64   `json:"top_k"`
+	TopP              *float64 `json:"top_p"`
+}
+
+type ModelLinks struct {
+	Details string `json:"details"`
+}
+
+type ModelPerRequestLimits struct {
+	CompletionTokens float64 `json:"completion_tokens"`
+	PromptTokens     float64 `json:"prompt_tokens"`
+}
+
+type ModelPricing struct {
+	Completion        string  `json:"completion"`
+	Prompt            string  `json:"prompt"`
+	Audio             string  `json:"audio"`
+	AudioOutput       string  `json:"audio_output"`
+	Discount          float64 `json:"discount"`
+	Image             string  `json:"image"`
+	ImageOutput       string  `json:"image_output"`
+	ImageToken        string  `json:"image_token"`
+	InputAudioCache   string  `json:"input_audio_cache"`
+	InputCacheRead    string  `json:"input_cache_read"`
+	InputCacheWrite   string  `json:"input_cache_write"`
+	InternalReasoning string  `json:"internal_reasoning"`
+	Request           string  `json:"request"`
+	WebSearch         string  `json:"web_search"`
 }
 
 type ModelTopProvider struct {
 	IsModerated         bool   `json:"is_moderated"`
-	ContextLength       *int64 `json:"context_length,omitempty"`
-	MaxCompletionTokens *int64 `json:"max_completion_tokens,omitempty"`
+	ContextLength       *int64 `json:"context_length"`
+	MaxCompletionTokens *int64 `json:"max_completion_tokens"`
 }
 
-type ModelPricing struct {
-	Prompt            string  `json:"prompt"`
-	Completion        string  `json:"completion"`
-	Image             string  `json:"image"`
-	Request           string  `json:"request"`
-	WebSearch         string  `json:"web_search"`
-	InternalReasoning string  `json:"internal_reasoning"`
-	InputCacheRead    *string `json:"input_cache_read,omitempty"`
-	InputCacheWrite   *string `json:"input_cache_write,omitempty"`
+type ModelDesignArenaBenchmark struct {
+	Arena    string  `json:"arena"`
+	Category string  `json:"category"`
+	Elo      float64 `json:"elo"`
+	Rank     int64   `json:"rank"`
+	WinRate  float64 `json:"win_rate"`
+}
+
+type ModelArtificialAnalysisBenchmark struct {
+	AgenticIndex      *float64 `json:"agentic_index"`
+	CodingIndex       *float64 `json:"coding_index"`
+	IntelligenceIndex *float64 `json:"intelligence_index"`
+}
+
+type ModelBenchmarks struct {
+	DesignArena        []ModelDesignArenaBenchmark      `json:"design_arena"`
+	ArtificialAnalysis ModelArtificialAnalysisBenchmark `json:"artificial_analysis"`
+}
+
+type ModelReasoning struct {
+	DefaultEffort     *string   `json:"default_effort"`
+	SupportedEfforts  *[]string `json:"supported_efforts"`
+	Mandatory         bool      `json:"mandatory"`
+	DefaultEnabled    bool      `json:"default_enabled"`
+	SupportsMaxTokens bool      `json:"supports_max_tokens"`
 }
 
 type Model struct {
-	ID                  string            `json:"id"`
-	Name                string            `json:"name"`
-	Created             int64             `json:"created"`
-	Description         string            `json:"description"`
-	Architecture        ModelArchitecture `json:"architecture"`
-	TopProvider         ModelTopProvider  `json:"top_provider"`
-	Pricing             ModelPricing      `json:"pricing"`
-	CanonicalSlug       *string           `json:"canonical_slug,omitempty"`
-	ContextLength       *int64            `json:"context_length,omitempty"`
-	HuggingFaceID       *string           `json:"hugging_face_id,omitempty"`
-	PerRequestLimits    any               `json:"per_request_limits,omitempty"`
-	SupportedParameters []string          `json:"supported_parameters,omitempty"`
+	Architecture        ModelArchitecture      `json:"architecture"`
+	CanonicalSlug       string                 `json:"canonical_slug"`
+	ContextLength       *int64                 `json:"context_length"`
+	Created             int64                  `json:"created"`
+	DefaultParameters   ModelDefaultParameters `json:"default_parameters"`
+	ID                  string                 `json:"id"`
+	Links               ModelLinks             `json:"links"`
+	Name                string                 `json:"name"`
+	PerRequestLimits    ModelPerRequestLimits  `json:"per_request_limits"`
+	Pricing             ModelPricing           `json:"pricing"`
+	SupportedParameters []string               `json:"supported_parameters"`
+	SupportedVoices     *[]string              `json:"supported_voices"`
+	TopProvider         ModelTopProvider       `json:"top_provider"`
+	Benchmarks          *ModelBenchmarks       `json:"benchmarks,omitempty"`
+	Description         string                 `json:"description"`
+	ExpirationDate      *string                `json:"expiration_date"`
+	HuggingFaceID       *string                `json:"hugging_face_id"`
+	KnowledgeCutoff     *string                `json:"knowledge_cutoff"`
+	Reasoning           *ModelReasoning        `json:"reasoning,omitempty"`
 }
 
 type ImageModelArchitecture struct {
@@ -74,6 +133,7 @@ type ImageModel struct {
 	SupportsStreaming   bool                            `json:"supports_streaming"`
 }
 
+// ListModels lists all models and their properties.
 func (c *Client) ListModels(ctx context.Context) (models []Model, err error) {
 	req, err := c.newRequest(
 		ctx,
@@ -94,6 +154,7 @@ func (c *Client) ListModels(ctx context.Context) (models []Model, err error) {
 	return
 }
 
+// ListUserModels lists models filtered by user provider preferences, privacy settings and guardrails.
 func (c *Client) ListUserModels(ctx context.Context) (models []Model, err error) {
 	req, err := c.newRequest(
 		ctx,
@@ -115,7 +176,6 @@ func (c *Client) ListUserModels(ctx context.Context) (models []Model, err error)
 }
 
 // ListEmbeddingsModels returns all available embeddings models and their properties.
-// API reference: https://openrouter.ai/docs/api/api-reference/embeddings/list-embeddings-models
 func (c *Client) ListEmbeddingsModels(ctx context.Context) ([]Model, error) {
 	req, err := c.newRequest(
 		ctx,
