@@ -2,7 +2,6 @@ package openrouter
 
 import (
 	"bufio"
-	"bytes"
 	"context"
 	"encoding/json"
 	"errors"
@@ -93,7 +92,12 @@ type ImageURLRef struct {
 }
 
 type ImageGenerationProvider struct {
-	Options map[string]map[string]any `json:"options,omitempty"`
+	Only           []string                  `json:"only,omitempty"`
+	Order          []string                  `json:"order,omitempty"`
+	Ignore         []string                  `json:"ignore,omitempty"`
+	Sort           any                       `json:"sort,omitempty"`
+	AllowFallbacks *bool                     `json:"allow_fallbacks,omitempty"`
+	Options        map[string]map[string]any `json:"options,omitempty"`
 }
 
 type ImageGenerationRequest struct {
@@ -170,14 +174,17 @@ type ImageGenerationStreamChunkType string
 const (
 	ImageStreamChunkTypePartialImage ImageGenerationStreamChunkType = "image_generation.partial_image"
 	ImageStreamChunkTypeCompleted    ImageGenerationStreamChunkType = "image_generation.completed"
+	ImageStreamChunkTypeError        ImageGenerationStreamChunkType = "error"
 )
 
 type ImageGenerationStreamChunk struct {
 	Type              ImageGenerationStreamChunkType `json:"type"`
 	PartialImageIndex *int                           `json:"partial_image_index,omitempty"`
 	B64JSON           string                         `json:"b64_json,omitempty"`
+	MediaType         string                         `json:"media_type,omitempty"`
 	Created           int64                          `json:"created,omitempty"`
 	Usage             *ImageGenerationUsage          `json:"usage,omitempty"`
+	Error             *APIError                      `json:"error,omitempty"`
 }
 
 type ImageGenerationStream struct {
@@ -213,7 +220,6 @@ func (c *Client) CreateImages(
 }
 
 // CreateImagesStream generates an image with streaming support.
-// CreateImagesStream generates an image with streaming support.
 func (c *Client) CreateImagesStream(
 	ctx context.Context,
 	request ImageGenerationRequest,
@@ -246,7 +252,9 @@ func (c *Client) CreateImagesStream(
 		return nil, err
 	}
 	if isFailureStatusCode(resp) {
-		return nil, c.handleErrorResp(resp)
+		err := c.handleErrorResp(resp)
+		resp.Body.Close()
+		return nil, err
 	}
 
 	if resp.StatusCode != http.StatusOK {
@@ -276,6 +284,7 @@ func (c *Client) CreateImagesStream(
 					Type:              ImageStreamChunkTypeCompleted,
 					PartialImageIndex: &idx,
 					B64JSON:           img.B64JSON,
+					MediaType:         img.MediaType,
 					Created:           fallback.Created,
 					Usage:             fallback.Usage,
 				}
@@ -310,20 +319,23 @@ func (c *Client) CreateImagesStream(
 					return
 				}
 
-				if strings.HasSuffix(string(line), "[DONE]\n") {
-					return
-				}
-
 				trimmed := strings.TrimSpace(string(line))
 				if trimmed == "" || strings.HasPrefix(trimmed, ":") {
 					continue
 				}
 
-				line = bytes.TrimPrefix(line, []byte("data:"))
+				data, ok := strings.CutPrefix(trimmed, "data:")
+				if !ok {
+					continue
+				}
+				data = strings.TrimSpace(data)
+				if data == "[DONE]" {
+					return
+				}
 
 				var chunk ImageGenerationStreamChunk
-				if err := json.Unmarshal(line, &chunk); err != nil {
-					slog.Error("failed to decode image stream", "error", err, "line", string(line))
+				if err := json.Unmarshal([]byte(data), &chunk); err != nil {
+					slog.Error("failed to decode image stream", "error", err, "line", data)
 					return
 				}
 
@@ -351,6 +363,9 @@ func (s *ImageGenerationStream) Recv() (ImageGenerationStreamChunk, error) {
 	case chunk, ok := <-s.stream:
 		if !ok {
 			return ImageGenerationStreamChunk{}, io.EOF
+		}
+		if chunk.Error != nil {
+			return ImageGenerationStreamChunk{}, chunk.Error
 		}
 		return chunk, nil
 	case <-s.done:
