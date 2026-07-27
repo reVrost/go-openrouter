@@ -135,8 +135,9 @@ type ChatCompletionAudioConfig struct {
 	Format AudioFormat `json:"format,omitempty"`
 }
 
-// ServiceTier parameter lets you control cost and latency tradeoffs when
-// sending requests through OpenRouter.
+// ServiceTier identifies the processing tier requested from or used by
+// OpenRouter. Requests support priority and flex; responses may also report
+// the default tier.
 //
 // https://openrouter.ai/docs/guides/features/service-tiers
 type ServiceTier string
@@ -146,7 +147,8 @@ const (
 	ServiceTierPriority ServiceTier = "priority"
 	// ServiceTierFlex is a tier with lower cost and higher latency.
 	ServiceTierFlex ServiceTier = "flex"
-	// ServiceTierDefault is default service tier.
+	// ServiceTierDefault is the normalized base-tier value returned in responses.
+	// It should not be sent in requests.
 	ServiceTierDefault ServiceTier = "default"
 )
 
@@ -317,7 +319,9 @@ type ChatCompletionResponse struct {
 	Citations         []string               `json:"citations"`
 	Usage             *Usage                 `json:"usage,omitempty"`
 	SystemFingerprint string                 `json:"system_fingerprint"`
-	ServiceTier       ServiceTier            `json:"service_tier,omitempty"`
+	// ServiceTier reports the tier actually used, or nil when no tier is available
+	// from the upstream provider.
+	ServiceTier *ServiceTier `json:"service_tier,omitempty"`
 
 	// ResponseCache contains OpenRouter response cache metadata from response headers.
 	ResponseCache *ResponseCacheMetadata `json:"-"`
