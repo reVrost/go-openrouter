@@ -325,7 +325,13 @@ func (c *Client) CreateImagesStream(
 					return
 				}
 
-				stream <- chunk
+				select {
+				case <-done:
+					return
+				case <-ctx.Done():
+					return
+				case stream <- chunk:
+				}
 			}
 		}
 	}()
