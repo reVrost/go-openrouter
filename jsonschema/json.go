@@ -27,45 +27,26 @@ const (
 // Definition is a struct for describing a JSON Schema.
 // It is fairly limited, and you may have better luck using a third-party library.
 type Definition struct {
-	// Type is the JSON Schema type (object, integer, string, ...).
+	// Type specifies the data type of the schema.
 	Type DataType `json:"type,omitempty"`
-	// Title is a short human label for the node.
-	Title string `json:"title,omitempty"`
-	// Description explains the field to the model.
+	// Description is the description of the schema.
 	Description string `json:"description,omitempty"`
-	// Enum limits the value to a fixed set of strings.
+	// Enum is used to restrict a value to a fixed set of values. It must be an array with at least
+	// one element, where each element is unique. You will probably only use this with strings.
 	Enum []string `json:"enum,omitempty"`
-	// Default is the value suggested when the instance omits the field.
-	Default any `json:"default,omitempty"`
-	// Properties holds object fields when Type is object.
+	// Properties describes the properties of an object, if the schema type is Object.
 	Properties map[string]Definition `json:"properties,omitempty"`
-	// Required lists property names that must be present on an object.
+	// Required specifies which properties are required, if the schema type is Object.
 	Required []string `json:"required,omitempty"`
-	// AdditionalProperties controls undeclared object keys (bool or a schema).
-	AdditionalProperties any `json:"additionalProperties,omitempty"`
-	// Items is the element schema when Type is array.
+	// Items specifies which data type an array contains, if the schema type is Array.
 	Items *Definition `json:"items,omitempty"`
-	// PrefixItems is a tuple-style list of per-index array item schemas.
-	PrefixItems []Definition `json:"prefixItems,omitempty"`
-	// MinItems is the minimum array length.
-	MinItems *int `json:"minItems,omitempty"`
-	// MaxItems is the maximum array length.
-	MaxItems *int `json:"maxItems,omitempty"`
-	// UniqueItems requires all array elements to be unique.
-	UniqueItems bool `json:"uniqueItems,omitempty"`
-	// Minimum is the inclusive numeric lower bound.
-	Minimum *float64 `json:"minimum,omitempty"`
-	// Maximum is the inclusive numeric upper bound.
-	Maximum *float64 `json:"maximum,omitempty"`
-	// MinLength is the minimum string length in characters.
-	MinLength *int `json:"minLength,omitempty"`
-	// MaxLength is the maximum string length in characters.
-	MaxLength *int `json:"maxLength,omitempty"`
-	// Pattern is a regex the string must match.
-	Pattern string `json:"pattern,omitempty"`
-	// Format is a semantic string format hint (e.g. date-time, email).
-	Format string `json:"format,omitempty"`
-	// Nullable marks the value as allowed to be null (OpenAI-style extension).
+	// AdditionalProperties is used to control the handling of properties in an object
+	// that are not explicitly defined in the properties section of the schema. example:
+	// additionalProperties: true
+	// additionalProperties: false
+	// additionalProperties: jsonschema.Definition{Type: jsonschema.String}
+	AdditionalProperties any `json:"additionalProperties,omitempty"`
+	// Whether the schema is nullable or not.
 	Nullable bool `json:"nullable,omitempty"`
 }
 
