@@ -10,6 +10,7 @@ import (
 	"log/slog"
 	"net/http"
 	"strings"
+	"sync"
 )
 
 const createImagesSuffix = "/images"
@@ -180,6 +181,7 @@ type ImageGenerationStreamChunk struct {
 }
 
 type ImageGenerationStream struct {
+	once     sync.Once
 	stream   <-chan ImageGenerationStreamChunk
 	done     chan struct{}
 	response *http.Response
@@ -358,8 +360,10 @@ func (s *ImageGenerationStream) Recv() (ImageGenerationStreamChunk, error) {
 
 // Close terminates the stream and cleans up resources.
 func (s *ImageGenerationStream) Close() {
-	close(s.done)
-	if s.response != nil {
-		s.response.Body.Close()
-	}
+	s.once.Do(func() {
+		close(s.done)
+		if s.response != nil {
+			s.response.Body.Close()
+		}
+	})
 }
