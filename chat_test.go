@@ -2,6 +2,7 @@ package openrouter_test
 
 import (
 	"encoding/json"
+	"strings"
 	"testing"
 
 	openrouter "github.com/revrost/go-openrouter"
@@ -106,6 +107,37 @@ func TestChatCompletionReasoningMarshalJSON(t *testing.T) {
 	expected := `{"effort":"high"}`
 	if string(data) != expected {
 		t.Errorf("expected %s, got %s", expected, string(data))
+	}
+}
+
+func TestChatCompletionRequestServiceTierMarshalJSON(t *testing.T) {
+	request := openrouter.ChatCompletionRequest{
+		ServiceTier: openrouter.ServiceTierFlex,
+	}
+
+	data, err := json.Marshal(request)
+	if err != nil {
+		t.Fatalf("expected no error, got %v", err)
+	}
+	if !strings.Contains(string(data), `"service_tier":"flex"`) {
+		t.Fatalf("expected flex service tier, got %s", data)
+	}
+}
+
+func TestChatCompletionResponseServiceTierUnmarshalJSON(t *testing.T) {
+	var response openrouter.ChatCompletionResponse
+	if err := json.Unmarshal([]byte(`{"service_tier":"default"}`), &response); err != nil {
+		t.Fatalf("expected no error, got %v", err)
+	}
+	if response.ServiceTier == nil || *response.ServiceTier != openrouter.ServiceTierDefault {
+		t.Fatalf("expected default service tier, got %v", response.ServiceTier)
+	}
+
+	if err := json.Unmarshal([]byte(`{"service_tier":null}`), &response); err != nil {
+		t.Fatalf("expected no error, got %v", err)
+	}
+	if response.ServiceTier != nil {
+		t.Fatalf("expected nil service tier, got %q", *response.ServiceTier)
 	}
 }
 
