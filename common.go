@@ -32,3 +32,7 @@ type PromptTokenDetails struct {
 	AudioTokens      int `json:"audio_tokens"`
 	VideoTokens      int `json:"video_tokens"`
 }
+
+func ptr[T any](v T) *T {
+	return &v
+}
