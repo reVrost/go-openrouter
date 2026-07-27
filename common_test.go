@@ -39,6 +39,13 @@ func TestUnmarshalChatCompletionResponse(t *testing.T) {
 	require.Equal(t, 0, rd.Index)
 	require.Contains(t, rd.Text, "hello")
 
+	// Anthropic signs each reasoning.text block; dropping the signature
+	// breaks the next turn. Assert it survives unmarshal and remarshal.
+	require.NotEmpty(t, rd.Signature)
+	roundTrip, err := json.Marshal(msg)
+	require.NoError(t, err)
+	require.Contains(t, string(roundTrip), `"signature":"`+rd.Signature+`"`)
+
 	require.NotNil(t, resp.Usage)
 	usage := resp.Usage
 	require.Equal(t, 7325, usage.PromptTokens)
