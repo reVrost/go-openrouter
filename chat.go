@@ -929,7 +929,9 @@ func (c *Client) CreateChatCompletionStream(
 		return nil, err
 	}
 	if isFailureStatusCode(resp) {
-		return nil, c.handleErrorResp(resp)
+		err := c.handleErrorResp(resp)
+		resp.Body.Close()
+		return nil, err
 	}
 
 	if resp.StatusCode != http.StatusOK {
